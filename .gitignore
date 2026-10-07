@@ -23,3 +23,6 @@ archive/
 *.dxvk-cache
 src/d3d11bench/*.exe
 __pycache__/
+
+# Website: bản dựng ra (sinh lại bằng tools/build-website.py)
+website/dist/
