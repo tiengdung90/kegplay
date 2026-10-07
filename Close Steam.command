@@ -3,5 +3,5 @@
 cd "$(dirname "$0")"
 ./scripts/stop.sh
 sleep 1
-osascript -e 'tell application "Terminal" to close (every window whose name contains "Tắt Steam")' >/dev/null 2>&1 &
+osascript -e 'tell application "Terminal" to close (every window whose name contains "Close Steam")' >/dev/null 2>&1 &
 exit 0
