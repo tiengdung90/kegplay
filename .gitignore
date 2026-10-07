@@ -24,5 +24,5 @@ archive/
 src/d3d11bench/*.exe
 __pycache__/
 
-# Website: bản dựng ra (sinh lại bằng tools/build-website.py)
-website/dist/
+# Website kegplay.com (mã, nội dung, cấu hình Cloudflare, bản dựng ra) — giữ riêng, không lên GitHub
+website/
