@@ -1,5 +1,5 @@
 #!/bin/bash
-# Mở thẳng 1 game Steam theo AppID (app Kegplay gọi khi bấm "Chơi"):  ./scripts/launch-game.sh <appid>
+# Mở thẳng 1 game Steam theo AppID (app kegPlay gọi khi bấm "Chơi"):  ./scripts/launch-game.sh <appid>
 # Steam chưa chạy → mở Steam kèm -applaunch. Steam đang chạy → gọi steam.exe -applaunch, Steam chuyển lệnh
 # cho phiên đang chạy. Steam vẫn phải chạy ngầm (game cần nó để kiểm bản quyền).
 set -euo pipefail

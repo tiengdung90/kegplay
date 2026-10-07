@@ -23,8 +23,8 @@ api() { curl -sS -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.g
 if api "https://api.github.com/repos/$REPO/releases/tags/$TAG" | grep -q '"upload_url"'; then
   echo "LỖI: bản phát hành $TAG đã có. Muốn ra bản mới thì tăng số trong VERSION."; exit 1
 fi
-NOTES="${1:-Kegplay $VER}"
-BODY="$(TAG="$TAG" VER="$VER" NOTES="$NOTES" perl -MJSON::PP -e 'print JSON::PP->new->encode({tag_name=>$ENV{TAG},target_commitish=>"main",name=>"Kegplay $ENV{VER}",body=>$ENV{NOTES}})')"
+NOTES="${1:-kegPlay $VER}"
+BODY="$(TAG="$TAG" VER="$VER" NOTES="$NOTES" perl -MJSON::PP -e 'print JSON::PP->new->encode({tag_name=>$ENV{TAG},target_commitish=>"main",name=>"kegPlay $ENV{VER}",body=>$ENV{NOTES}})')"
 RESP="$(api -X POST "https://api.github.com/repos/$REPO/releases" -d "$BODY")"
 ID="$(printf '%s' "$RESP" | perl -MJSON::PP -e 'local $/; my $j = eval { JSON::PP->new->decode(<STDIN>) }; print $j->{id} // ""')"
 [ -n "$ID" ] || { echo "LỖI: GitHub không tạo bản phát hành:"; printf '%s\n' "$RESP" | head -5; exit 1; }

@@ -1,8 +1,8 @@
 #!/bin/bash
-# Bật/tắt bộ vượt chặn Steam Store cho bottle (SpoofDPI + PAC của Kegplay — xem env.sh).
+# Bật/tắt bộ vượt chặn Steam Store cho bottle (SpoofDPI + PAC của kegPlay — xem env.sh).
 # Nhà mạng chặn *.steampowered.com theo SNI; Wine KHÔNG đọc proxy của macOS nên phải ghi
 # vào registry Windows của bottle.
-#   ./scripts/proxy.sh on    [PAC_URL]   (mặc định PAC riêng của Kegplay: http://127.0.0.1:18082/kegplay.pac)
+#   ./scripts/proxy.sh on    [PAC_URL]   (mặc định PAC riêng của kegPlay: http://127.0.0.1:18082/kegplay.pac)
 #   ./scripts/proxy.sh off
 #   ./scripts/proxy.sh status
 set -euo pipefail

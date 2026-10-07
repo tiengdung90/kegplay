@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Sửa đường dẫn tuyệt đối trong registry bottle khi thư mục Kegplay bị chuyển chỗ.
+# Sửa đường dẫn tuyệt đối trong registry bottle khi thư mục kegPlay bị chuyển chỗ.
 # Wine ghi vài đường dẫn Mac tuyệt đối (dạng Z:\...) vào registry, vd font của runtime Wine.
 #   relocate.pl <bottle_dir> <gốc_cũ> <gốc_mới>      (gốc = đường dẫn Unix tuyệt đối)
 # Chỉ chạy khi Wine của bottle đang TẮT (wineserver ghi đè registry lúc thoát). Sao lưu *.bak-relocate.

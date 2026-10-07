@@ -5,7 +5,7 @@ source "$(dirname "$0")/env.sh"
 need_wine
 [ -f "$STEAM_EXE_UNIX" ] || die "Chưa cài Steam. Chạy ./scripts/install-steam.sh trước."
 
-# Bottle đang dùng PAC riêng của Kegplay → bật máy chủ PAC trước khi Steam chạy
+# Bottle đang dùng PAC riêng của kegPlay → bật máy chủ PAC trước khi Steam chạy
 if [ -f "$WINEPREFIX/.kegplay_pac" ]; then unblock_start; fi
 
 if bottle_running && WINEDEBUG=-all wine tasklist 2>/dev/null | grep -qi '^steam\.exe'; then

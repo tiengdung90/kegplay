@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tạo biểu tượng tạm cho Kegplay → app/Kegplay.icns (chỉ người phát triển chạy; cần Pillow + iconutil).
+"""Tạo biểu tượng tạm cho kegPlay → app/Kegplay.icns (chỉ người phát triển chạy; cần Pillow + iconutil).
 Thay bằng thiết kế riêng: đặt PNG 1024×1024 vào app/icon-1024.png rồi chạy lại với tham số --from-png."""
 import os, subprocess, sys, tempfile
 from PIL import Image, ImageDraw, ImageFont

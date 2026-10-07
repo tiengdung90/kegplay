@@ -40,7 +40,7 @@ fi
 echo "==> Xong. Bottle: $WINEPREFIX"
 echo "    Tiếp theo: ./scripts/install-steam.sh"
 
-# Vượt chặn Steam Store: bật mặc định (nhà mạng VN chặn store.steampowered.com). Kegplay tự tải SpoofDPI vào
+# Vượt chặn Steam Store: bật mặc định (nhà mạng VN chặn store.steampowered.com). kegPlay tự tải SpoofDPI vào
 # runtime/ và chỉ áp cho bottle này — không đổi proxy của máy. Ở nơi không bị chặn: KEGPLAY_UNBLOCK=0 ./scripts/setup.sh
 # (hoặc tắt sau bằng ./scripts/proxy.sh off).
 if [ "${KEGPLAY_UNBLOCK:-1}" = "1" ]; then

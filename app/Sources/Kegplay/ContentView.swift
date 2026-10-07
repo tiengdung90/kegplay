@@ -25,7 +25,7 @@ struct ContentView: View {
         .overlay { if backend.busy { busyOverlay } }
         .onAppear { selectedEngine = backend.engine }
         .onChange(of: backend.engine) { new in if !backend.steamRunning { selectedEngine = new } }
-        .alert("Kegplay", isPresented: Binding(get: { backend.alert != nil }, set: { if !$0 { backend.alert = nil } })) {
+        .alert("kegPlay", isPresented: Binding(get: { backend.alert != nil }, set: { if !$0 { backend.alert = nil } })) {
             Button(L("alert.viewLog")) { showLog = true; backend.alert = nil }
             Button(L("alert.help")) { backend.openHelp(); backend.alert = nil }
             Button(L("btn.close"), role: .cancel) { backend.alert = nil }
@@ -40,7 +40,7 @@ struct ContentView: View {
         HStack(spacing: 12) {
             Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 40, height: 40)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Kegplay").font(.title2.bold())
+                Text("kegPlay").font(.title2.bold())
                 Text(L("app.tagline", backend.version))
                     .font(.caption).foregroundStyle(.secondary)
             }
@@ -279,7 +279,7 @@ struct SettingsSheet: View {
             }
             Divider()
             VStack(alignment: .leading, spacing: 4) {
-                Text("Kegplay \(backend.version)").font(.callout.bold())
+                Text("kegPlay \(backend.version)").font(.callout.bold())
                 Text(L("settings.about"))
                     .font(.caption).foregroundStyle(.secondary)
             }

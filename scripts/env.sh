@@ -66,7 +66,7 @@ if [ -f "$ENGINES_DIR/dxvk/dxvk.conf" ]; then
 fi
 
 # ---------- Vượt chặn Steam Store (nhà mạng VN chặn store.steampowered.com theo SNI) ----------
-# Kegplay tự mang SpoofDPI (github.com/xvzc/SpoofDPI): tải bản dựng sẵn vào runtime/spoofdpi/, chạy ở cổng
+# kegPlay tự mang SpoofDPI (github.com/xvzc/SpoofDPI): tải bản dựng sẵn vào runtime/spoofdpi/, chạy ở cổng
 # riêng khi mở Steam, tắt khi stop.sh. Nó cắt nhỏ gói TLS ClientHello để thiết bị chặn không đọc được tên miền.
 # KHÔNG đụng proxy hệ thống của máy (auto-configure-network mặc định tắt); chỉ bottle Wine dùng, qua PAC.
 KEGPLAY_DPI_VER="${KEGPLAY_DPI_VER:-1.5.3}"
@@ -107,8 +107,8 @@ dpi_start() {
   echo "CẢNH BÁO: SpoofDPI không lên ở cổng $KEGPLAY_DPI_PORT (xem logs/spoofdpi.log) — Store có thể không vào được."
 }
 # Tắt tiến trình có dòng lệnh CHỨA ĐÚNG chuỗi cho trước (so chuỗi cố định, không phải regex — đường dẫn có thể
-# chứa dấu cách, ngoặc…). Chỉ tắt tiến trình của CHÍNH bản Kegplay này (theo đường dẫn dữ liệu), không đụng
-# bản Kegplay khác đang chạy trên cùng máy/cùng cổng.
+# chứa dấu cách, ngoặc…). Chỉ tắt tiến trình của CHÍNH bản kegPlay này (theo đường dẫn dữ liệu), không đụng
+# bản kegPlay khác đang chạy trên cùng máy/cùng cổng.
 kill_own() {
   local pid
   for pid in $(ps -axo pid=,command= | grep -F -- "$1" | grep -v "grep -F" | awk '{print $1}'); do
@@ -148,7 +148,7 @@ STEAM_EXE_UNIX="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steam.exe"
 die() { echo "LỖI: $*" >&2; exit 1; }
 need_wine() { [ -x "$WINE_BASE/bin/wine" ] || die "Chưa có Wine. Chạy ./scripts/setup.sh trước."; }
 
-# Wine của BOTTLE NÀY có đang chạy không (không xét bottle/bản Kegplay khác trên máy).
+# Wine của BOTTLE NÀY có đang chạy không (không xét bottle/bản kegPlay khác trên máy).
 bottle_running() { [ -x "$WINE_BASE/bin/wineserver" ] && "$WINE_BASE/bin/wineserver" -k0 2>/dev/null; }
 # Có chương trình Windows của NGƯỜI DÙNG (Steam, game…) đang chạy trong bottle này? Bỏ qua dịch vụ hệ thống
 # của Wine (services/winedevice/plugplay… chạy kèm mọi lệnh wine rồi tắt theo wineserver).
@@ -164,7 +164,7 @@ wait_wine_idle() {
   wineserver -k 2>/dev/null || true
 }
 
-# Cho phép chuyển thư mục Kegplay đi đâu cũng được: mọi đường dẫn trong script đều tính từ
+# Cho phép chuyển thư mục kegPlay đi đâu cũng được: mọi đường dẫn trong script đều tính từ
 # KEGPLAY_ROOT; riêng registry của bottle có vài đường dẫn tuyệt đối do Wine ghi (font runtime)
 # → nhớ gốc cũ trong <bottle>/.kegplay_root, thấy khác thì sửa (chỉ khi Wine đang tắt).
 kegplay_relocate() {
@@ -174,7 +174,7 @@ kegplay_relocate() {
   old="$(cat "$marker")"
   [ "$old" = "$KEGPLAY_DATA" ] && return 0
   if bottle_running; then
-    echo "LƯU Ý: Kegplay đã bị chuyển chỗ nhưng Wine đang chạy — tắt hẳn (./scripts/stop.sh) rồi mở lại để tự sửa đường dẫn."
+    echo "LƯU Ý: kegPlay đã bị chuyển chỗ nhưng Wine đang chạy — tắt hẳn (./scripts/stop.sh) rồi mở lại để tự sửa đường dẫn."
     return 0
   fi
   perl "$KEGPLAY_ROOT/scripts/relocate.pl" "$WINEPREFIX" "$old" "$KEGPLAY_DATA" \

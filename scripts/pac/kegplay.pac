@@ -1,5 +1,4 @@
-if (host == "steampowered.com" || shExpMatch(host, "*.steampowered.com") ||
-      shExpMatch(host, "*.steamserver.net"))// MẪU file PAC của Kegplay (Steam Windows trong Wine). Khi mở Steam, Kegplay thay __DPI_PORT__ bằng cổng
+// MẪU file PAC của kegPlay (Steam Windows trong Wine). Khi mở Steam, kegPlay thay __DPI_PORT__ bằng cổng
 // SpoofDPI của chính nó rồi ghi ra runtime/pac/kegplay.pac và tự phục vụ qua HTTP (Wine chỉ tải PAC qua HTTP).
 //
 // Chỉ steampowered.com đi qua SpoofDPI; mọi thứ khác đi thẳng. Vì sao hẹp: 2026-10-06 trình cập nhật của

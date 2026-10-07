@@ -1,5 +1,5 @@
 #!/bin/bash
-# Kegplay — cài đặt lần đầu. Dán vào Terminal:   bash ~/Downloads/Kegplay/install.sh
+# kegPlay — cài đặt lần đầu. Dán vào Terminal:   bash ~/Downloads/Kegplay/install.sh
 # Tải Wine (~190 MB), tạo "bottle" Windows, bật vượt chặn Steam Store, cài Steam bản Windows, chọn DXMT.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]:-$0}")"
@@ -19,7 +19,7 @@ chmod +x scripts/*.sh scripts/*.pl ./*.command engines/dxmt/build-winemac.sh 2>/
 ./scripts/use-engine.sh dxmt
 
 echo ""
-echo "  🎉 CÀI XONG. Từ giờ, trong thư mục Kegplay:"
+echo "  🎉 CÀI XONG. Từ giờ, trong thư mục kegPlay:"
 echo "     • Bấm đúp  'Mở Steam - DXMT.command'   để mở Steam (đề xuất)"
 echo "     • Bấm đúp  'Mở Steam - DXVK.command'   nếu game lỗi với DXMT"
 echo "     • Bấm đúp  'Tắt Steam.command'         để tắt hẳn Steam + game"

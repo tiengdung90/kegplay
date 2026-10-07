@@ -5,7 +5,7 @@ struct KegplayApp: App {
     @StateObject private var backend = Backend()
 
     var body: some Scene {
-        WindowGroup("Kegplay") {
+        WindowGroup("kegPlay") {
             ContentView().environmentObject(backend)
         }
         .windowResizability(.contentMinSize)
