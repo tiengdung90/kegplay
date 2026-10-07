@@ -1,0 +1,44 @@
+Kegplay - third-party notices
+=============================
+
+Kegplay is a set of scripts and a small macOS app that glue the open-source projects below together.
+Kegplay does NOT redistribute Wine, DXMT, DXVK, MoltenVK, SpoofDPI or Steam: the installer downloads each of
+them from its author's own release page, on the user's machine.
+
+Project      Role                               License            Source (downloaded from here)
+-----------  ---------------------------------  -----------------  ------------------------------------------------
+Wine         Runs Windows programs on macOS     LGPL 2.1+          https://github.com/Gcenx/macOS_Wine_builds
+                                                                   source: https://gitlab.winehq.org/wine/wine
+DXMT         Direct3D 10/11 -> Metal            see its repo       https://github.com/3Shain/dxmt
+DXVK-macOS   Direct3D 10/11 -> Vulkan           zlib               https://github.com/Gcenx/DXVK-macOS
+MoltenVK     Vulkan -> Metal (ships with Wine)  Apache 2.0         https://github.com/KhronosGroup/MoltenVK
+SpoofDPI     SNI-based unblocking               Apache 2.0         https://github.com/xvzc/SpoofDPI
+Steam        Store/launcher (official setup)    Valve proprietary  https://store.steampowered.com
+
+Binaries that ARE included in this repository
+---------------------------------------------
+
+engines/dxmt/lib/winemac.so
+    A rebuild of winemac.drv from Wine 11.18 (LGPL 2.1 or later), modified by Kegplay. It is licensed under
+    the LGPL 2.1 or later, like Wine itself. The complete corresponding source is:
+      - unmodified Wine 11.18: https://dl.winehq.org/wine/source/11.x/wine-11.18.tar.xz
+      - Kegplay's changes, all in this repository:
+          engines/dxmt/bridge/dxmt_export.c, engines/dxmt/bridge/dxmt_view.m   (DXMT bridge, added files)
+          engines/dxmt/bridge/patch-opengl.pl                                  (three OpenGL patches to opengl.c)
+      - exact build steps: engines/dxmt/build-winemac.sh
+    You may replace this file with your own build made by that script.
+
+prebuilt/cefwrap.exe
+    Built from src/cefwrap/cefwrap.c (Kegplay code, MIT). The idea of passing "--disable-gpu --single-process"
+    to steamwebhelper.exe comes from https://github.com/ByMedion/macos-wine-steam (PR #8).
+
+prebuilt/dnsfallback.dylib
+    Built from src/dnsfallback/dnsfallback.c (Kegplay code, MIT) by tools/build-dnsfallback.sh.
+
+Kegplay's own code
+------------------
+Everything written for Kegplay, except the winemac bridge and patches named above, is under the MIT license
+in the LICENSE file.
+
+Kegplay is not affiliated with Valve, Apple, Microsoft, CodeWeavers or any project named here. Product names
+belong to their respective owners.

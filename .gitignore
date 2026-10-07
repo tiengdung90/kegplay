@@ -1,0 +1,25 @@
+# Tài liệu nội bộ: mọi file .md nằm trong docs/ và không lên GitHub
+docs/
+*.md
+
+# Sản phẩm build
+dist/
+app/.build/
+app/Localization/
+BUILD
+
+# Mã nguồn Wine tải về để dựng winemac.so (475 MB) — tải lại bằng engines/dxmt/build-winemac.sh
+engines/dxmt/build/
+
+# Dữ liệu người dùng khi chạy bản script ngay trong thư mục này (KHÔNG BAO GIỜ đưa lên)
+bottles/
+runtime/
+cache/
+logs/
+archive/
+
+# Lặt vặt
+.DS_Store
+*.dxvk-cache
+src/d3d11bench/*.exe
+__pycache__/
