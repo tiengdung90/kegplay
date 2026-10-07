@@ -23,4 +23,4 @@ wine "$setup_exe" /S >"$LOG_DIR/install-steam.log" 2>&1 || true
 wineserver -w
 
 [ -f "$STEAM_EXE_UNIX" ] || die "Cài Steam thất bại, xem $LOG_DIR/install-steam.log"
-echo "==> Đã cài Steam. Mở bằng: ./scripts/run-steam.sh  (hoặc bấm đúp 'Mở Steam - DXMT.command')"
+echo "==> Đã cài Steam. Mở bằng: ./scripts/run-steam.sh  (hoặc bấm đúp 'Open Steam - DXMT.command')"

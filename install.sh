@@ -20,9 +20,9 @@ chmod +x scripts/*.sh scripts/*.pl ./*.command engines/dxmt/build-winemac.sh 2>/
 
 echo ""
 echo "  🎉 CÀI XONG. Từ giờ, trong thư mục kegPlay:"
-echo "     • Bấm đúp  'Mở Steam - DXMT.command'   để mở Steam (đề xuất)"
-echo "     • Bấm đúp  'Mở Steam - DXVK.command'   nếu game lỗi với DXMT"
-echo "     • Bấm đúp  'Tắt Steam.command'         để tắt hẳn Steam + game"
+echo "     • Bấm đúp  'Open Steam - DXMT.command'   để mở Steam (đề xuất)"
+echo "     • Bấm đúp  'Open Steam - DXVK.command'   nếu game lỗi với DXMT"
+echo "     • Bấm đúp  'Close Steam.command'         để tắt hẳn Steam + game"
 echo ""
 echo "  Lần đầu mở, Steam tự cập nhật vài trăm MB (2–5 phút) rồi hiện màn hình đăng nhập."
 [ -f "$(dirname "$0")/README.md" ] && echo "  Xem thêm: README.md"

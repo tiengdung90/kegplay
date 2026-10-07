@@ -17,7 +17,7 @@ if user_exe_running; then
     echo "==> Steam/game đang chạy bằng $want rồi (có bản cập nhật runtime chờ áp dụng ở lần mở sau khi tắt Steam)."
     exit 0
   fi
-  echo "Steam/game đang chạy bằng $cur. Bấm đúp 'Tắt Steam.command' rồi mở lại bằng $want."
+  echo "Steam/game đang chạy bằng $cur. Bấm đúp 'Close Steam.command' rồi mở lại bằng $want."
   exit 1
 fi
 wait_wine_idle

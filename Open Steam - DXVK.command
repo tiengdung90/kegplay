@@ -9,5 +9,5 @@ if ./scripts/use-engine.sh dxvk; then
 else
   sleep 12
 fi
-osascript -e 'tell application "Terminal" to close (every window whose name contains "Mở Steam - DXVK")' >/dev/null 2>&1 &
+osascript -e 'tell application "Terminal" to close (every window whose name contains "Open Steam - DXVK")' >/dev/null 2>&1 &
 exit 0

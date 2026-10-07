@@ -9,5 +9,5 @@ if ./scripts/use-engine.sh dxmt; then
 else
   sleep 12
 fi
-osascript -e 'tell application "Terminal" to close (every window whose name contains "Mở Steam - DXMT")' >/dev/null 2>&1 &
+osascript -e 'tell application "Terminal" to close (every window whose name contains "Open Steam - DXMT")' >/dev/null 2>&1 &
 exit 0

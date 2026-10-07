@@ -55,5 +55,5 @@ echo "==> $OUT (xuất macdrv_functions ✓)"
 if [ -d "$WINE_DXMT" ]; then
   user_exe_running && die "Steam/game đang chạy — tắt rồi chạy lại để cập nhật runtime DXMT."
   wait_wine_idle; rm -rf "$WINE_DXMT"
-  echo "==> Đã xoá runtime DXMT cũ; bấm 'Mở Steam - DXMT' (hoặc use-engine.sh dxmt) để dựng lại."
+  echo "==> Đã xoá runtime DXMT cũ; bấm 'Open Steam - DXMT' (hoặc use-engine.sh dxmt) để dựng lại."
 fi
