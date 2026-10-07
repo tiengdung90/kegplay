@@ -1,6 +1,8 @@
 # Tài liệu nội bộ: mọi file .md nằm trong docs/ và không lên GitHub
 docs/
 *.md
+# Ngoại lệ duy nhất: README công khai của kho (tiếng Anh). Bản hướng dẫn tiếng Việt vẫn ở docs/README.md
+!/README.md
 
 # Sản phẩm build
 dist/
