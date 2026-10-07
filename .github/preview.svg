@@ -29,15 +29,15 @@
     <text x="660" y="201" fill="#a99f92" font-size="12">Unblock Store</text><rect x="752" y="187" width="38" height="20" rx="10" fill="#b5283a"/><circle cx="780" cy="197" r="8" fill="#fff"/>
     <line x1="90" y1="222" x2="810" y2="222" stroke="#342c26"/>
     <!-- game cards -->
-    <rect x="112" y="238" width="216" height="150" rx="10" fill="#1c1815" stroke="#342c26"/><rect x="113" y="239" width="214" height="100" rx="9" fill="url(#g1)"/>
+    <rect x="112" y="238" width="290" height="150" rx="10" fill="#1c1815" stroke="#342c26"/><rect x="113" y="239" width="288" height="100" rx="9" fill="url(#g1)"/>
     <text x="124" y="364" fill="#f3ece2" font-size="12.5" font-weight="700">Kingdom Come: Deliverance</text><text x="124" y="379" fill="#a99f92" font-size="10.5">64.8 GB</text>
-    <rect x="270" y="354" width="48" height="22" rx="6" fill="#b5283a"/><text x="279" y="369" fill="#fff" font-size="11" font-weight="600">▶ Play</text>
-    <rect x="342" y="238" width="216" height="150" rx="10" fill="#1c1815" stroke="#342c26"/><rect x="343" y="239" width="214" height="100" rx="9" fill="url(#g2)"/>
-    <text x="354" y="364" fill="#f3ece2" font-size="12.5" font-weight="700">Mount &amp; Blade II: Bannerlord</text><text x="354" y="379" fill="#a99f92" font-size="10.5">64.0 GB</text>
-    <rect x="500" y="354" width="48" height="22" rx="6" fill="#b5283a"/><text x="509" y="369" fill="#fff" font-size="11" font-weight="600">▶ Play</text>
+    <rect x="342" y="354" width="50" height="22" rx="6" fill="#b5283a"/><text x="351" y="369" fill="#fff" font-size="11" font-weight="600">▶ Play</text>
+    <rect x="416" y="238" width="290" height="150" rx="10" fill="#1c1815" stroke="#342c26"/><rect x="417" y="239" width="288" height="100" rx="9" fill="url(#g2)"/>
+    <text x="428" y="364" fill="#f3ece2" font-size="12.5" font-weight="700">Mount &amp; Blade II: Bannerlord</text><text x="428" y="379" fill="#a99f92" font-size="10.5">64.0 GB</text>
+    <rect x="646" y="354" width="50" height="22" rx="6" fill="#b5283a"/><text x="655" y="369" fill="#fff" font-size="11" font-weight="600">▶ Play</text>
     <!-- footer -->
     <line x1="90" y1="408" x2="810" y2="408" stroke="#342c26"/>
     <text x="112" y="428" fill="#a99f92" font-size="11">Offline games using DirectX 9/10/11.</text>
-    <text x="640" y="428" fill="#6aa5ff" font-size="11">Troubleshooting     Log     Settings</text>
+    <text x="788" y="428" fill="#6aa5ff" font-size="11" text-anchor="end">Troubleshooting  ·  Log  ·  Settings</text>
   </g>
 </svg>
