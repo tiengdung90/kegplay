@@ -306,12 +306,6 @@ final class Backend: ObservableObject {
         ])
     }
 
-    /// Sửa hiển thị cho game DirectDraw cũ (cài cnc-ddraw vào thư mục game) hoặc hoàn tác.
-    func fixOldGame(_ game: Game, undo: Bool) async {
-        _ = await perform(L(undo ? "busy.fixUndo" : "busy.fixDisplay", game.name),
-                          [("fix-ddraw-game.sh", undo ? [game.id, "--undo"] : [game.id], [:])])
-    }
-
     func stop() async {
         _ = await perform(L("busy.stop"), [("stop.sh", [], [:])])
     }

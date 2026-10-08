@@ -30,7 +30,7 @@ It is a thin, readable layer of shell scripts with a SwiftUI front end. Nothing 
 - **Sign-in that does not hang.** A DNS fallback steps in when an ISP's DNS refuses to resolve Steam's sign-in servers.
 - **No input-method trouble.** Switches the keyboard to ABC while a game window is active and restores your input method when you leave.
 - **Update notice.** The app tells you when a newer release is available.
-- **Old DirectDraw games.** Games from around 2000 that fail with “Unable to set the video mode” get [cnc-ddraw](https://github.com/FunkyFr3sh/cnc-ddraw) installed for them: automatically for known titles, or from the ••• menu on any game card.
+- **Old DirectDraw games.** Supported titles from around 2000 that would fail with “Unable to set the video mode” are fixed automatically: kegPlay installs [cnc-ddraw](https://github.com/FunkyFr3sh/cnc-ddraw) into the game folder when you open Steam or press Play.
 - **No Steam overlay surprises.** The overlay that Steam injects into games breaks several of them under Wine, so kegPlay keeps it out.
 - **13 languages.** English, Vietnamese, Simplified Chinese, Japanese, Korean, Spanish, Portuguese (Brazil), German, French, Russian, Turkish, Indonesian and Thai.
 

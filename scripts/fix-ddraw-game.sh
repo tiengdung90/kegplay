@@ -3,7 +3,8 @@
 #     ./scripts/fix-ddraw-game.sh <appid>            cài cnc-ddraw vào thư mục game
 #     ./scripts/fix-ddraw-game.sh <appid> --undo     trả file gốc của game (và không tự cài lại nữa)
 #     ./scripts/fix-ddraw-game.sh <appid> --auto     như cài, nhưng im lặng nếu đã cài hoặc người dùng đã hoàn tác
-# App gọi bản thường/--undo từ menu "•••" trên thẻ game; run-steam.sh và launch-game.sh gọi --auto cho các game đã biết.
+# Người dùng KHÔNG phải gọi script này: run-steam.sh và launch-game.sh gọi --auto cho các game đã biết
+# (KEGPLAY_DDRAW_APPIDS trong env.sh). Bản thường và --undo là cho người phát triển thử game mới.
 #
 # Vì sao: các game này xin 640x480/800x600 toàn màn hình, màn hình Mac không có chế độ đó, và DirectDraw của Wine
 # trên Mac vẽ hỏng (chớp/đen). cnc-ddraw (github.com/FunkyFr3sh/cnc-ddraw, MIT) vẽ game vào một cửa sổ thường.
