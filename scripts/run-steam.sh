@@ -3,6 +3,7 @@
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 need_wine
+overlay_off
 [ -f "$STEAM_EXE_UNIX" ] || die "Chưa cài Steam. Chạy ./scripts/install-steam.sh trước."
 
 # Bottle đang dùng PAC riêng của kegPlay → bật máy chủ PAC trước khi Steam chạy

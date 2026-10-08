@@ -146,6 +146,17 @@ STEAM_EXE_WIN='C:\Program Files (x86)\Steam\steam.exe'
 STEAM_EXE_UNIX="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steam.exe"
 
 die() { echo "LỖI: $*" >&2; exit 1; }
+# Steam Overlay (GameOverlayRenderer*.dll) bị Steam chèn vào mọi game. Dưới Wine nó hay phá: KCD mất phím di chuyển,
+# Red Alert 2 + cnc-ddraw văng ngay lúc mở (2026-10-08). Chặn nạp 2 thư viện đó cho cả bottle; làm 1 lần, đánh dấu bằng file.
+overlay_off() {
+  [ -f "$WINEPREFIX/.kegplay_nooverlay" ] && return 0
+  [ -d "$WINEPREFIX" ] || return 0
+  for d in gameoverlayrenderer gameoverlayrenderer64; do
+    wine reg add 'HKCU\Software\Wine\DllOverrides' /v "$d" /t REG_SZ /d "" /f >/dev/null 2>&1 || return 0
+  done
+  : > "$WINEPREFIX/.kegplay_nooverlay"
+}
+
 need_wine() { [ -x "$WINE_BASE/bin/wine" ] || die "Chưa có Wine. Chạy ./scripts/setup.sh trước."; }
 
 # Wine của BOTTLE NÀY có đang chạy không (không xét bottle/bản kegPlay khác trên máy).
