@@ -140,7 +140,9 @@ struct ContentView: View {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 230, maximum: 320), spacing: 14)], spacing: 14) {
                         ForEach(backend.games) { game in
-                            GameCard(game: game) { Task { await backend.play(game, engine: selectedEngine) } }
+                            GameCard(game: game,
+                                     play: { Task { await backend.play(game, engine: selectedEngine) } },
+                                     fix: { undo in Task { await backend.fixOldGame(game, undo: undo) } })
                         }
                     }
                     .padding(18)
@@ -180,6 +182,7 @@ struct ContentView: View {
 struct GameCard: View {
     let game: Game
     let play: () -> Void
+    let fix: (_ undo: Bool) -> Void     // sửa hiển thị cho game cũ / hoàn tác
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -201,6 +204,13 @@ struct GameCard: View {
                     Text(game.ready ? game.sizeText : L("game.downloading")).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
+                Menu {
+                    Button(L("menu.fixDisplay")) { fix(false) }
+                    Button(L("menu.fixUndo")) { fix(true) }
+                } label: { Image(systemName: "ellipsis") }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .disabled(!game.ready)
+                .help(L("menu.fixHelp"))
                 Button(action: play) { Label(L("btn.play"), systemImage: "play.fill") }
                     .buttonStyle(.borderedProminent).controlSize(.small)
                     .disabled(!game.ready)

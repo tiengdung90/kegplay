@@ -8,6 +8,7 @@ need_wine
 appid="${1:?Dùng: $0 <appid>}"
 case "$appid" in *[!0-9]*) die "AppID phải là số: $appid";; esac
 [ -f "$STEAM_EXE_UNIX" ] || die "Chưa cài Steam."
+apply_game_fixes "$appid"
 
 if bottle_running && WINEDEBUG=-all wine tasklist 2>/dev/null | grep -qi '^steam\.exe'; then
   echo "==> Steam đang chạy — yêu cầu mở game $appid"

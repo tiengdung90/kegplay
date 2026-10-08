@@ -1,7 +1,9 @@
 #!/bin/bash
 # Sửa game DirectDraw cũ (Red Alert 2, Tiberian Sun…) báo "Unable to set the video mode", chớp hoặc đen:
 #     ./scripts/fix-ddraw-game.sh <appid>            cài cnc-ddraw vào thư mục game
-#     ./scripts/fix-ddraw-game.sh <appid> --undo     trả file gốc của game
+#     ./scripts/fix-ddraw-game.sh <appid> --undo     trả file gốc của game (và không tự cài lại nữa)
+#     ./scripts/fix-ddraw-game.sh <appid> --auto     như cài, nhưng im lặng nếu đã cài hoặc người dùng đã hoàn tác
+# App gọi bản thường/--undo từ menu "•••" trên thẻ game; run-steam.sh và launch-game.sh gọi --auto cho các game đã biết.
 #
 # Vì sao: các game này xin 640x480/800x600 toàn màn hình, màn hình Mac không có chế độ đó, và DirectDraw của Wine
 # trên Mac vẽ hỏng (chớp/đen). cnc-ddraw (github.com/FunkyFr3sh/cnc-ddraw, MIT) vẽ game vào một cửa sổ thường.
@@ -24,22 +26,28 @@ dir="$(sed -n 's/^[[:space:]]*"installdir"[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p
 GAME="$APPS/common/$dir"
 [ -d "$GAME" ] || die "Không thấy thư mục game: $GAME"
 BACKUP="$KEGPLAY_DATA/backups/ddraw-$appid"
-user_exe_running && [ -n "$(WINEDEBUG=-all wine tasklist 2>/dev/null | tr -d '\r' | grep -i "$(ls "$GAME" | grep -i '\.exe$' | head -1)" || true)" ] \
-  && die "Game đang chạy — thoát game rồi chạy lại."
+OPTOUT="$WINEPREFIX/.kegplay_noddraw_$appid"      # người dùng đã bấm Hoàn tác → đừng tự cài lại
+mode="${2:-}"
+if [ "$mode" = "--auto" ]; then
+  [ -f "$OPTOUT" ] && exit 0
+  cmp -s "$GAME/ddraw.dll" "$CNC_DIR/ddraw.dll" 2>/dev/null && exit 0     # đã cài rồi (Steam chưa ghi đè)
+fi
 
 exes() { ls "$GAME" | grep -i '\.exe$' || true; }
 
-if [ "${2:-}" = "--undo" ]; then
+if [ "$mode" = "--undo" ]; then
   [ -d "$BACKUP" ] || die "Không có bản sao lưu ở $BACKUP"
   rm -f "$GAME/ddraw.dll" "$GAME/ddraw.ini"
   cp "$BACKUP"/* "$GAME/" 2>/dev/null || true
   exes | while read -r exe; do
     wine reg delete "HKCU\\Software\\Wine\\AppDefaults\\$exe\\DllOverrides" /v ddraw /f >/dev/null 2>&1 || true
   done
+: > "$OPTOUT"
   echo "==> Đã trả file gốc cho '$dir'."
   exit 0
 fi
 
+rm -f "$OPTOUT"
 # 1. tải cnc-ddraw (ghim phiên bản + SHA-256)
 if [ ! -f "$CNC_DIR/ddraw.dll" ]; then
   mkdir -p "$CNC_DIR"

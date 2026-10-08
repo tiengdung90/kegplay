@@ -157,6 +157,19 @@ overlay_off() {
   : > "$WINEPREFIX/.kegplay_nooverlay"
 }
 
+# Game đã biết là cần sửa DirectDraw (AppID Steam). Thêm game mới vào đây SAU KHI đã thử chạy được.
+#   2229850 = Command & Conquer: Red Alert 2 and Yuri's Revenge
+KEGPLAY_DDRAW_APPIDS="2229850"
+# Tự cài cnc-ddraw cho các game trên nếu đã tải xong mà chưa sửa (hoặc Steam vừa ghi đè lại file). Lỗi thì bỏ qua.
+apply_game_fixes() {
+  local apps="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steamapps" id
+  for id in $KEGPLAY_DDRAW_APPIDS; do
+    [ -n "${1:-}" ] && [ "$1" != "$id" ] && continue
+    grep -q '"StateFlags"[[:space:]]*"4"' "$apps/appmanifest_$id.acf" 2>/dev/null || continue
+    "$KEGPLAY_ROOT/scripts/fix-ddraw-game.sh" "$id" --auto || echo "    (chưa sửa được hiển thị cho game $id — bỏ qua)"
+  done
+}
+
 need_wine() { [ -x "$WINE_BASE/bin/wine" ] || die "Chưa có Wine. Chạy ./scripts/setup.sh trước."; }
 
 # Wine của BOTTLE NÀY có đang chạy không (không xét bottle/bản kegPlay khác trên máy).

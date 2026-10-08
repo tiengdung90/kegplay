@@ -14,6 +14,8 @@ DXVK-macOS   Direct3D 10/11 -> Vulkan           zlib               https://githu
 MoltenVK     Vulkan -> Metal (ships with Wine)  Apache 2.0         https://github.com/KhronosGroup/MoltenVK
 SpoofDPI     SNI-based unblocking               Apache 2.0         https://github.com/xvzc/SpoofDPI
 Steam        Store/launcher (official setup)    Valve proprietary  https://store.steampowered.com
+cnc-ddraw    DirectDraw replacement, installed  MIT                https://github.com/FunkyFr3sh/cnc-ddraw
+             into old games on request
 
 Binaries that ARE included in this repository
 ---------------------------------------------

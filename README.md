@@ -30,6 +30,7 @@ It is a thin, readable layer of shell scripts with a SwiftUI front end. Nothing 
 - **Sign-in that does not hang.** A DNS fallback steps in when an ISP's DNS refuses to resolve Steam's sign-in servers.
 - **No input-method trouble.** Switches the keyboard to ABC while a game window is active and restores your input method when you leave.
 - **Update notice.** The app tells you when a newer release is available.
+- **Old DirectDraw games.** Games from around 2000 that fail with “Unable to set the video mode” get [cnc-ddraw](https://github.com/FunkyFr3sh/cnc-ddraw) installed for them: automatically for known titles, or from the ••• menu on any game card.
 - **No Steam overlay surprises.** The overlay that Steam injects into games breaks several of them under Wine, so kegPlay keeps it out.
 - **13 languages.** English, Vietnamese, Simplified Chinese, Japanese, Korean, Spanish, Portuguese (Brazil), German, French, Russian, Turkish, Indonesian and Thai.
 
@@ -56,7 +57,7 @@ Quit Steam for Mac before you download games in kegPlay if both use the same acc
 |---|---|---|
 | Kingdom Come: Deliverance | Runs smoothly | DXMT or DXVK |
 | Mount & Blade II: Bannerlord | Runs smoothly | Use DXMT: the game's launcher needs a fix that only exists there |
-| Command & Conquer: Red Alert 2 and Yuri's Revenge | Playable | Needs the one-time [cnc-ddraw fix](https://kegplay.com/debug/#ddraw-video-mode). In the game's Options, set Game Resolution to your screen's resolution |
+| Command & Conquer: Red Alert 2 and Yuri's Revenge | Playable, in a window | kegPlay applies the [display fix](https://kegplay.com/debug/#ddraw-video-mode) for you. In the game's Options, set Game Resolution to your screen's resolution |
 
 The list is short because the project is new. Offline games that use DirectX 9, 10 or 11 generally have a chance of running. Reports for other games are welcome in [Issues](https://github.com/tiengdung90/kegplay/issues).
 
