@@ -57,7 +57,7 @@ Quit Steam for Mac before you download games in kegPlay if both use the same acc
 |---|---|---|
 | Kingdom Come: Deliverance | Runs smoothly | DXMT or DXVK |
 | Mount & Blade II: Bannerlord | Runs smoothly | Use DXMT: the game's launcher needs a fix that only exists there |
-| Command & Conquer: Red Alert 2 and Yuri's Revenge | Playable, in a window | kegPlay applies the [display fix](https://kegplay.com/debug/#ddraw-video-mode) for you. In the game's Options, set Game Resolution to your screen's resolution |
+| Command & Conquer: Red Alert 2 and Yuri's Revenge | Playable, in a window | kegPlay applies the [display fix](https://kegplay.com/debug/#ddraw-video-mode) and sets the game to your screen's resolution |
 
 The list is short because the project is new. Offline games that use DirectX 9, 10 or 11 generally have a chance of running. Reports for other games are welcome in [Issues](https://github.com/tiengdung90/kegplay/issues).
 

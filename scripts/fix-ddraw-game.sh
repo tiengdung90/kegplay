@@ -31,8 +31,11 @@ OPTOUT="$WINEPREFIX/.kegplay_noddraw_$appid"      # người dùng đã bấm Ho
 mode="${2:-}"
 if [ "$mode" = "--auto" ]; then
   [ -f "$OPTOUT" ] && exit 0
-  cmp -s "$GAME/ddraw.dll" "$CNC_DIR/ddraw.dll" 2>/dev/null && exit 0     # đã cài rồi (Steam chưa ghi đè)
+  # đã cài rồi (Steam chưa ghi đè) → bỏ qua phần cài, nhưng VẪN chạy bước 4: file .INI của game có thể chỉ xuất hiện
+  # sau lần chạy đầu tiên, khi đó mới đặt được độ phân giải
+  cmp -s "$GAME/ddraw.dll" "$CNC_DIR/ddraw.dll" 2>/dev/null && installed=1
 fi
+installed="${installed:-}"
 
 exes() { ls "$GAME" | grep -i '\.exe$' || true; }
 
@@ -48,6 +51,7 @@ if [ "$mode" = "--undo" ]; then
   exit 0
 fi
 
+if [ -z "$installed" ]; then
 rm -f "$OPTOUT"
 # 1. tải cnc-ddraw (ghim phiên bản + SHA-256)
 if [ ! -f "$CNC_DIR/ddraw.dll" ]; then
@@ -79,19 +83,37 @@ exes | while read -r exe; do
   wine reg add "HKCU\\Software\\Wine\\AppDefaults\\$exe\\DllOverrides" /v ddraw /t REG_SZ /d "native,builtin" /f >/dev/null 2>&1
 done
 overlay_off
+fi
 
-# 4. riêng Red Alert 2 / Yuri: cho phép độ phân giải cao, tắt bộ đệm phụ
+# 4. riêng Red Alert 2 / Yuri's Revenge (2 file cấu hình riêng: RA2.INI và RA2MD.INI):
+#    - cho phép độ phân giải cao, tắt bộ đệm phụ;
+#    - đặt độ phân giải game = màn hình Mac, để người dùng khỏi phải tự chọn trong Options. Lý do: menu của game là
+#      nút Win32 con, chỉ nằm đúng chỗ khi KHÔNG phóng to; ở cỡ bằng màn hình thì menu nằm giữa, vào trận kín màn hình.
+#      Ở cỡ nhỏ (vd 1024x768) bản Yuri còn mất luôn ô chọn độ phân giải trong Options.
+#      Chỉ đổi khi game đang ở các cỡ mặc định/nhỏ — người dùng đã tự chọn cỡ khác thì giữ nguyên.
 if [ "$appid" = "2229850" ]; then
+  screen="$(osascript -l JavaScript -e 'ObjC.import("AppKit"); var f=$.NSScreen.mainScreen.frame; Math.round(f.size.width)+"x"+Math.round(f.size.height)' 2>/dev/null || true)"
+  sw="${screen%x*}"; sh="${screen#*x}"
+  case "$sw$sh" in ''|*[!0-9]*) sw=""; sh="";; esac
   for ini in RA2.INI RA2MD.INI; do
     [ -f "$GAME/$ini" ] || continue
-    perl -0pi -e '
+    KP_W="$sw" KP_H="$sh" perl -0pi -e '
       for my $kv (["AllowHiResModes","yes"],["VideoBackBuffer","no"]) {
         my ($k,$v) = @$kv;
         s/^\Q$k\E=.*$/$k=$v/mi or s/^(\[Video\][^\n]*\n)/$1$k=$v\r\n/mi;
+      }
+      if ($ENV{KP_W} && $ENV{KP_H}) {
+        my ($cur) = /^ScreenWidth=(\d+)/mi;
+        if (!defined $cur || $cur <= 1024) {
+          for my $kv (["ScreenWidth",$ENV{KP_W}],["ScreenHeight",$ENV{KP_H}]) {
+            my ($k,$v) = @$kv;
+            s/^\Q$k\E=.*$/$k=$v/mi or s/^(\[Video\][^\n]*\n)/$1$k=$v\r\n/mi;
+          }
+        }
       }' "$GAME/$ini"
   done
 fi
 
+[ -n "$installed" ] && exit 0
 echo "==> Đã cài cnc-ddraw cho '$dir'. Mở game từ Steam."
-echo "    Trong Options của game, chọn độ phân giải bằng màn hình của bạn (vd 1728 x 1117)."
 echo "    Trả về như cũ: $0 $appid --undo"
