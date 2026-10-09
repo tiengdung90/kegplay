@@ -102,7 +102,7 @@ fi
 #    - đặt độ phân giải game = màn hình Mac, để người dùng khỏi phải tự chọn trong Options. Lý do: menu của game là
 #      nút Win32 con, chỉ nằm đúng chỗ khi KHÔNG phóng to; ở cỡ bằng màn hình thì menu nằm giữa, vào trận kín màn hình.
 #      Ở cỡ nhỏ (vd 1024x768) bản Yuri còn mất luôn ô chọn độ phân giải trong Options.
-#      Chỉ đổi khi game đang ở các cỡ mặc định/nhỏ — người dùng đã tự chọn cỡ khác thì giữ nguyên.
+#      Chỉ đổi khi game đang ở các cỡ mặc định/nhỏ hoặc LỚN HƠN màn hình — người dùng đã tự chọn cỡ vừa màn hình thì giữ nguyên.
 if [ "$appid" = "2229850" ]; then
   screen="$(osascript -l JavaScript -e 'ObjC.import("AppKit"); var f=$.NSScreen.mainScreen.frame; Math.round(f.size.width)+"x"+Math.round(f.size.height)' 2>/dev/null || true)"
   sw="${screen%x*}"; sh="${screen#*x}"
@@ -116,7 +116,9 @@ if [ "$appid" = "2229850" ]; then
       }
       if ($ENV{KP_W} && $ENV{KP_H}) {
         my ($cur) = /^ScreenWidth=(\d+)/mi;
-        if (!defined $cur || $cur <= 1024) {
+        my ($curh) = /^ScreenHeight=(\d+)/mi;
+        # cỡ lớn hơn màn hình (game liệt kê cả các chế độ Retina, vd 2992x1934) thì cửa sổ tràn ra ngoài, chỉ thấy một góc
+        if (!defined $cur || $cur <= 1024 || $cur > $ENV{KP_W} || ($curh // 0) > $ENV{KP_H}) {
           for my $kv (["ScreenWidth",$ENV{KP_W}],["ScreenHeight",$ENV{KP_H}]) {
             my ($k,$v) = @$kv;
             s/^\Q$k\E=.*$/$k=$v/mi or s/^(\[Video\][^\n]*\n)/$1$k=$v\r\n/mi;
