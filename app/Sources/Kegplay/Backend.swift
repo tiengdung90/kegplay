@@ -39,6 +39,7 @@ final class Backend: ObservableObject {
     let release: String          // số phát hành trong file VERSION: "0.1.0"
     let buildNumber: String
     private var timer: Timer?
+    private var fixedGames: Set<String>?     // game đã tải xong mà app đã xét sửa hiển thị; nil = chưa quét lần nào
     private let inputGuard = InputGuard()
 
     static let defaultDataRoot = FileManager.default
@@ -170,8 +171,21 @@ final class Backend: ObservableObject {
                 self.unblock = unb
                 self.games = found
                 self.steamRunning = running
+                self.fixNewGames(found)
             }
         }
+    }
+
+    /// Game vừa tải xong trong lúc app đang mở → cài bản sửa riêng của game đó (nếu có) ngay, không chờ lần mở Steam sau.
+    /// Lần quét đầu chỉ ghi nhận: các game có sẵn đã được run-steam.sh / launch-game.sh lo.
+    private func fixNewGames(_ found: [Game]) {
+        let ready = Set(found.filter(\.ready).map(\.id))
+        guard let known = fixedGames else { fixedGames = ready; return }
+        guard !busy else { return }             // đang chạy việc khác → để lượt quét sau
+        let fresh = ready.subtracting(known)
+        fixedGames = ready
+        guard !fresh.isEmpty else { return }
+        Task { for id in fresh.sorted() { _ = await runScript("apply-fixes.sh", [id]) } }
     }
 
     nonisolated static func processList() -> [String] {
