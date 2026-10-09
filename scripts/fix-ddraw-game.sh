@@ -76,13 +76,16 @@ perl -0pe '
   my %set = (width=>0, height=>0, fullscreen=>"false", windowed=>"true", renderer=>"opengl",
              shader=>"Bilinear", fixchilds=>0, savesettings=>0);
   s{(\[ddraw\].*?)(?=\n\[)}{ my $s = $1; for my $k (keys %set) { $s =~ s/^\Q$k\E=.*$/$k=$set{$k}/m } $s }se;
-  # Riêng Yuri (gamemd.exe): menu của nó LUÔN là hộp thoại 800x600 đặt ở góc trên trái (0,0), nút là cửa sổ con Win32.
-  # Hình phải được vẽ đúng chỗ đó thì chuột mới trùng nút: chạy toàn màn hình không độc quyền (nonexclusive) và
-  # fixchilds=1 (thấy cửa sổ con thì thôi phóng to, vẽ 1:1 sát góc trên trái). Đã đo bằng tools/diag winprobe:
-  # rê/bấm trúng GUI:SinglePlayer, vào trận kín màn hình. "boxing" (vẽ ở giữa) là SAI: hình ở giữa, nút vẫn ở góc.
+  # Riêng Yuri (gamemd.exe): menu LUÔN là 800x600 và game cộng vị trí cửa sổ trên màn hình vào vị trí các ô con
+  # (nút, ô chọn Win32), nên chỉ khớp khi cửa sổ nằm sát góc trên trái. Chạy cửa sổ không viền ở (0,0), không
+  # phóng to, không đổi chế độ màn hình Mac: menu là cửa sổ 800x600, vào trận cửa sổ nở kín màn hình, thoát thì co lại.
+  # Còn lệch: macOS đẩy cửa sổ xuống dưới thanh menu (34 điểm) nên hàng ô chọn ở Skirmish thấp hơn 34 điểm, vẫn bấm được.
+  # Đã thử và HỎNG (đo bằng tools/diag winprobe): boxing (hình giữa, nút ở góc); nonexclusive toàn màn hình (thoát trận
+  # màn hình về 960x600 mà cửa sổ vẫn 1728 → hình bự, không bấm được); không viền kín màn hình + fixchilds=1 (thoát trận bị phóng to).
   s{(\[gamemd\]\r?\n)(.*?)(?=\r?\n\r?\n|\r?\n;|\r?\n\[)}{
      my ($h, $b) = ($1, $2); my $nl = $h =~ /\r\n/ ? "\r\n" : "\n";
-     my @kv = (nonexclusive=>"true", maintas=>"false", boxing=>"false", fullscreen=>"false", windowed=>"false", fixchilds=>1);
+     my @kv = (nonexclusive=>"true", maintas=>"false", boxing=>"false", fullscreen=>"false", windowed=>"true", fixchilds=>0,
+               border=>"false", posX=>0, posY=>0, center_window=>0);
      while (my ($k, $v) = splice(@kv, 0, 2)) { $b =~ s/^\Q$k\E=.*$/$k=$v/m or $b .= "$nl$k=$v" }
      $h . $b }se;
 ' "$CNC_DIR/ddraw.ini" > "$GAME/ddraw.ini"
