@@ -152,9 +152,17 @@ final class Backend: ObservableObject {
         let unb = fm.fileExists(atPath: bottle.appendingPathComponent(".kegplay_pac").path)
         let found = Backend.scanGames(steamDir: steamDir)
         let marker = steamDir.appendingPathComponent("steam.exe").path.lowercased()
+        let serverMarker = data.appendingPathComponent("runtime").path.lowercased()
 
         Task.detached {
-            let running = Backend.processList().contains { $0.lowercased().contains(marker) }
+            // Steam do kegPlay mở hiện trong ps bằng đường dẫn Unix (marker). Steam do một game tự gọi lên
+            // (vd file khởi chạy của game chạy "steam.exe steam://run/…") lại hiện bằng đường dẫn Windows → phải nhận cả
+            // trường hợp đó, miễn là wineserver của đúng thư mục dữ liệu này đang chạy. Không thì app báo "Sẵn sàng"
+            // trong khi script từ chối mở vì Steam đã chạy.
+            let lines = Backend.processList().map { $0.lowercased() }
+            let ownServer = lines.contains { $0.contains(serverMarker) && $0.contains("wineserver") }
+            let running = lines.contains { $0.contains(marker) }
+                || (ownServer && lines.contains { $0.contains("\\steam\\steam.exe") })
             await MainActor.run {
                 self.wineInstalled = wine
                 self.steamInstalled = steam

@@ -76,6 +76,13 @@ perl -0pe '
   my %set = (width=>0, height=>0, fullscreen=>"false", windowed=>"true", renderer=>"opengl",
              shader=>"Bilinear", fixchilds=>0, savesettings=>0);
   s{(\[ddraw\].*?)(?=\n\[)}{ my $s = $1; for my $k (keys %set) { $s =~ s/^\Q$k\E=.*$/$k=$set{$k}/m } $s }se;
+  # Riêng Yuri (gamemd.exe): menu của nó LUÔN là 800x600 và các nút con được đặt theo tâm MÀN HÌNH (không theo cửa sổ).
+  # Chạy cửa sổ 800x600 thì nút lệch ra ngoài (đúng nửa phần chênh giữa màn hình và 800x600). Cho bản này chạy
+  # cửa sổ không viền kín màn hình + "boxing" (vẽ hình 1:1 ở giữa, viền đen): menu nằm đúng tâm màn hình, khớp với nút.
+  s{(\[gamemd\]\r?\n)(.*?)(?=\r?\n\r?\n|\r?\n;|\r?\n\[)}{
+     my ($h, $b) = ($1, $2); my $nl = $h =~ /\r\n/ ? "\r\n" : "\n";
+     $b =~ s/^boxing=.*$/boxing=true/m or $b .= "${nl}boxing=true";
+     $h . $b . "${nl}fullscreen=true${nl}windowed=true" }se;
 ' "$CNC_DIR/ddraw.ini" > "$GAME/ddraw.ini"
 
 # 3. bảo Wine dùng ddraw.dll trong thư mục game cho các file chạy của game này
