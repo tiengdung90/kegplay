@@ -28,12 +28,34 @@ GAME="$APPS/common/$dir"
 [ -d "$GAME" ] || die "Không thấy thư mục game: $GAME"
 BACKUP="$KEGPLAY_DATA/backups/ddraw-$appid"
 OPTOUT="$WINEPREFIX/.kegplay_noddraw_$appid"      # người dùng đã bấm Hoàn tác → đừng tự cài lại
+# cấu hình: chỉ sửa mục [ddraw] của file mẫu (các mục riêng từng game phía dưới giữ nguyên)
+gen_ini() {
+perl -0pe '
+  my %set = (width=>0, height=>0, fullscreen=>"false", windowed=>"true", renderer=>"opengl",
+             shader=>"Bilinear", fixchilds=>0, savesettings=>0);
+  s{(\[ddraw\].*?)(?=\n\[)}{ my $s = $1; for my $k (keys %set) { $s =~ s/^\Q$k\E=.*$/$k=$set{$k}/m } $s }se;
+  # Riêng Yuri (gamemd.exe): menu LUÔN là 800x600 và game cộng vị trí cửa sổ trên màn hình vào vị trí các ô con
+  # (nút, ô chọn Win32), nên chỉ khớp khi cửa sổ nằm sát góc trên trái. Chạy cửa sổ không viền ở (0,0), không
+  # phóng to, không đổi chế độ màn hình Mac: menu là cửa sổ 800x600, vào trận cửa sổ nở kín màn hình, thoát thì co lại.
+  # Còn lệch: macOS đẩy cửa sổ xuống dưới thanh menu (34 điểm) nên hàng ô chọn ở Skirmish thấp hơn 34 điểm, vẫn bấm được.
+  # Đã thử và HỎNG (đo bằng tools/diag winprobe): boxing (hình giữa, nút ở góc); nonexclusive toàn màn hình (thoát trận
+  # màn hình về 960x600 mà cửa sổ vẫn 1728 → hình bự, không bấm được); không viền kín màn hình + fixchilds=1 (thoát trận bị phóng to).
+  s{(\[gamemd\]\r?\n)(.*?)(?=\r?\n\r?\n|\r?\n;|\r?\n\[)}{
+     my ($h, $b) = ($1, $2); my $nl = $h =~ /\r\n/ ? "\r\n" : "\n";
+     my @kv = (nonexclusive=>"true", maintas=>"false", boxing=>"false", fullscreen=>"false", windowed=>"true", fixchilds=>0,
+               border=>"false", posX=>0, posY=>0, center_window=>0);
+     while (my ($k, $v) = splice(@kv, 0, 2)) { $b =~ s/^\Q$k\E=.*$/$k=$v/m or $b .= "$nl$k=$v" }
+     $h . $b }se;
+' "$CNC_DIR/ddraw.ini"
+}
+
 mode="${2:-}"
 if [ "$mode" = "--auto" ]; then
   [ -f "$OPTOUT" ] && exit 0
   # đã cài rồi (Steam chưa ghi đè) → bỏ qua phần cài, nhưng VẪN chạy bước 4: file .INI của game có thể chỉ xuất hiện
   # sau lần chạy đầu tiên, khi đó mới đặt được độ phân giải
-  cmp -s "$GAME/ddraw.dll" "$CNC_DIR/ddraw.dll" 2>/dev/null && installed=1
+  # ddraw.ini cũng phải đúng bản hiện hành: bản kegPlay cũ ghi cấu hình Yuri sai, cập nhật app là tự sửa lại
+  cmp -s "$GAME/ddraw.dll" "$CNC_DIR/ddraw.dll" 2>/dev/null && gen_ini 2>/dev/null | cmp -s - "$GAME/ddraw.ini" && installed=1
 fi
 installed="${installed:-}"
 
@@ -71,24 +93,7 @@ if [ ! -d "$BACKUP" ]; then
 fi
 cp "$CNC_DIR/ddraw.dll" "$GAME/ddraw.dll"
 cp -R "$CNC_DIR/Shaders" "$GAME/" 2>/dev/null || true
-# cấu hình: chỉ sửa mục [ddraw] của file mẫu (các mục riêng từng game phía dưới giữ nguyên)
-perl -0pe '
-  my %set = (width=>0, height=>0, fullscreen=>"false", windowed=>"true", renderer=>"opengl",
-             shader=>"Bilinear", fixchilds=>0, savesettings=>0);
-  s{(\[ddraw\].*?)(?=\n\[)}{ my $s = $1; for my $k (keys %set) { $s =~ s/^\Q$k\E=.*$/$k=$set{$k}/m } $s }se;
-  # Riêng Yuri (gamemd.exe): menu LUÔN là 800x600 và game cộng vị trí cửa sổ trên màn hình vào vị trí các ô con
-  # (nút, ô chọn Win32), nên chỉ khớp khi cửa sổ nằm sát góc trên trái. Chạy cửa sổ không viền ở (0,0), không
-  # phóng to, không đổi chế độ màn hình Mac: menu là cửa sổ 800x600, vào trận cửa sổ nở kín màn hình, thoát thì co lại.
-  # Còn lệch: macOS đẩy cửa sổ xuống dưới thanh menu (34 điểm) nên hàng ô chọn ở Skirmish thấp hơn 34 điểm, vẫn bấm được.
-  # Đã thử và HỎNG (đo bằng tools/diag winprobe): boxing (hình giữa, nút ở góc); nonexclusive toàn màn hình (thoát trận
-  # màn hình về 960x600 mà cửa sổ vẫn 1728 → hình bự, không bấm được); không viền kín màn hình + fixchilds=1 (thoát trận bị phóng to).
-  s{(\[gamemd\]\r?\n)(.*?)(?=\r?\n\r?\n|\r?\n;|\r?\n\[)}{
-     my ($h, $b) = ($1, $2); my $nl = $h =~ /\r\n/ ? "\r\n" : "\n";
-     my @kv = (nonexclusive=>"true", maintas=>"false", boxing=>"false", fullscreen=>"false", windowed=>"true", fixchilds=>0,
-               border=>"false", posX=>0, posY=>0, center_window=>0);
-     while (my ($k, $v) = splice(@kv, 0, 2)) { $b =~ s/^\Q$k\E=.*$/$k=$v/m or $b .= "$nl$k=$v" }
-     $h . $b }se;
-' "$CNC_DIR/ddraw.ini" > "$GAME/ddraw.ini"
+gen_ini > "$GAME/ddraw.ini"
 
 # 3. bảo Wine dùng ddraw.dll trong thư mục game cho các file chạy của game này
 exes | while read -r exe; do
