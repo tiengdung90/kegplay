@@ -160,13 +160,29 @@ overlay_off() {
 # Game đã biết là cần sửa DirectDraw (AppID Steam). Thêm game mới vào đây SAU KHI đã thử chạy được.
 #   2229850 = Command & Conquer: Red Alert 2 and Yuri's Revenge
 KEGPLAY_DDRAW_APPIDS="2229850"
-# Tự cài cnc-ddraw cho các game trên nếu đã tải xong mà chưa sửa (hoặc Steam vừa ghi đè lại file). Lỗi thì bỏ qua.
+# Game cần dùng trình biên dịch shader của Microsoft đi kèm game (d3dcompiler_47.dll trong thư mục game) thay cho bản
+# của Wine (vkd3d-shader). Bannerlord tự biên dịch shader còn thiếu lúc chơi, có #include tương đối mà bản Wine không mở
+# được ("E4002: Failed to open …") → hộp lỗi rồi văng. Định dạng: "<appid>:<exe>,<exe>…" cách nhau bằng dấu cách.
+#   261550 = Mount & Blade II: Bannerlord
+KEGPLAY_D3DC_FIXES="261550:Bannerlord.exe,Bannerlord.Native.exe,TaleWorlds.MountAndBlade.Launcher.exe,Launcher.Native.exe"
+# Tự sửa các game trên nếu đã tải xong mà chưa sửa (hoặc Steam vừa ghi đè lại file). Lỗi thì bỏ qua.
 apply_game_fixes() {
-  local apps="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steamapps" id
+  local apps="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steamapps" id entry exe
   for id in $KEGPLAY_DDRAW_APPIDS; do
     [ -n "${1:-}" ] && [ "$1" != "$id" ] && continue
     grep -q '"StateFlags"[[:space:]]*"4"' "$apps/appmanifest_$id.acf" 2>/dev/null || continue
     "$KEGPLAY_ROOT/scripts/fix-ddraw-game.sh" "$id" --auto || echo "    (chưa sửa được hiển thị cho game $id — bỏ qua)"
+  done
+  for entry in $KEGPLAY_D3DC_FIXES; do
+    id="${entry%%:*}"
+    [ -n "${1:-}" ] && [ "$1" != "$id" ] && continue
+    [ -f "$WINEPREFIX/.kegplay_d3dc_$id" ] && continue
+    grep -q '"StateFlags"[[:space:]]*"4"' "$apps/appmanifest_$id.acf" 2>/dev/null || continue
+    for exe in $(echo "${entry#*:}" | tr ',' ' '); do
+      wine reg add "HKCU\\Software\\Wine\\AppDefaults\\$exe\\DllOverrides" /v d3dcompiler_47 /t REG_SZ /d native,builtin /f \
+        >/dev/null 2>&1 || { echo "    (chưa sửa được trình biên dịch shader cho game $id — bỏ qua)"; continue 2; }
+    done
+    : > "$WINEPREFIX/.kegplay_d3dc_$id"
   done
 }
 
