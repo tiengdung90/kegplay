@@ -3,5 +3,7 @@
 #   ./scripts/doctor.sh [--net]
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
-export KEGPLAY_DDRAW_APPIDS KEGPLAY_D3DC_FIXES
+export KEGPLAY_DDRAW_APPIDS
+# game đã được đặt dùng trình biên dịch shader của chính nó (dấu do apply_game_fixes ghi)
+KEGPLAY_D3DC_FIXES="$(ls "$WINEPREFIX"/.kegplay_d3dc_* 2>/dev/null | sed 's#.*_##' | tr '\n' ' ')"; export KEGPLAY_D3DC_FIXES
 exec perl "$KEGPLAY_ROOT/scripts/doctor.pl" "$WINEPREFIX/drive_c/Program Files (x86)/Steam/steamapps" "$@" 2>/dev/null

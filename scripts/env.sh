@@ -162,30 +162,47 @@ overlay_off() {
 # Game đã biết là cần sửa DirectDraw (AppID Steam). Thêm game mới vào đây SAU KHI đã thử chạy được.
 #   2229850 = Command & Conquer: Red Alert 2 and Yuri's Revenge
 KEGPLAY_DDRAW_APPIDS="2229850"
-# Game cần dùng trình biên dịch shader của Microsoft đi kèm game (d3dcompiler_47.dll trong thư mục game) thay cho bản
-# của Wine (vkd3d-shader). Bannerlord tự biên dịch shader còn thiếu lúc chơi, có #include tương đối mà bản Wine không mở
-# được ("E4002: Failed to open …") → hộp lỗi rồi văng. Định dạng: "<appid>:<exe>,<exe>…" cách nhau bằng dấu cách.
-#   261550 = Mount & Blade II: Bannerlord
-KEGPLAY_D3DC_FIXES="261550:Bannerlord.exe,Bannerlord.Native.exe,TaleWorlds.MountAndBlade.Launcher.exe,Launcher.Native.exe"
-# Tự sửa các game trên nếu đã tải xong mà chưa sửa (hoặc Steam vừa ghi đè lại file). Lỗi thì bỏ qua.
+# Trình biên dịch shader: game nào MANG THEO d3dcompiler_47.dll (bản Microsoft) cạnh file chạy thì cho các file chạy
+# trong thư mục đó dùng bản của game (DllOverrides native,builtin) — giống hệt trên Windows. Không có thì Wine dùng bản
+# của nó (vkd3d-shader), và game tự biên dịch shader còn thiếu lúc chơi sẽ hỏng ở #include tương đối
+# ("E4002: Failed to open …") → hộp lỗi rồi văng (gặp ở Bannerlord, 2026-10-20). Game không mang theo file này: không đụng.
+# Dấu <bottle>/.kegplay_d3dc_<appid> ghi danh sách exe đã đặt; game cập nhật thêm exe/thư mục thì tự đặt lại.
+d3dc_fix_game() { # <appid> <thư mục game>
+  local id="$1" dir="$2" mark="$WINEPREFIX/.kegplay_d3dc_$1" exes reg exe
+  exes="$(find "$dir" -maxdepth 6 -type f -iname 'd3dcompiler_47.dll' 2>/dev/null | while IFS= read -r f; do
+            find "$(dirname "$f")" -maxdepth 1 -type f -iname '*.exe' | sed 's#.*/##'; done | sort -fu)"
+  [ -n "$exes" ] || return 0
+  [ "$(cat "$mark" 2>/dev/null)" = "$exes" ] && return 0
+  reg="$(mktemp -t kegplay-d3dc).reg"
+  { echo 'REGEDIT4'; echo
+    while IFS= read -r exe; do
+      printf '[HKEY_CURRENT_USER\\Software\\Wine\\AppDefaults\\%s\\DllOverrides]\n"d3dcompiler_47"="native,builtin"\n\n' "$exe"
+    done <<< "$exes"; } > "$reg"
+  if wine reg import "$(winepath -w "$reg" 2>/dev/null || echo "$reg")" >/dev/null 2>&1; then
+    printf '%s\n' "$exes" > "$mark"
+  else
+    echo "    (chưa sửa được trình biên dịch shader cho game $id — bỏ qua)"
+  fi
+  rm -f "$reg"
+}
+
+# Tự sửa các game đã tải xong (hoặc khi Steam vừa ghi đè lại file). $1 = chỉ game này. Lỗi thì bỏ qua.
 apply_game_fixes() {
-  local apps="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steamapps" id entry exe
+  local apps="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steamapps" id mf dir
   for id in $KEGPLAY_DDRAW_APPIDS; do
     [ -n "${1:-}" ] && [ "$1" != "$id" ] && continue
     grep -q '"StateFlags"[[:space:]]*"4"' "$apps/appmanifest_$id.acf" 2>/dev/null || continue
     "$KEGPLAY_ROOT/scripts/fix-ddraw-game.sh" "$id" --auto || echo "    (chưa sửa được hiển thị cho game $id — bỏ qua)"
   done
-  for entry in $KEGPLAY_D3DC_FIXES; do
-    id="${entry%%:*}"
+  for mf in "$apps"/appmanifest_*.acf; do
+    [ -f "$mf" ] || continue
+    id="${mf##*_}"; id="${id%.acf}"
     [ -n "${1:-}" ] && [ "$1" != "$id" ] && continue
-    [ -f "$WINEPREFIX/.kegplay_d3dc_$id" ] && continue
-    grep -q '"StateFlags"[[:space:]]*"4"' "$apps/appmanifest_$id.acf" 2>/dev/null || continue
-    for exe in $(echo "${entry#*:}" | tr ',' ' '); do
-      wine reg add "HKCU\\Software\\Wine\\AppDefaults\\$exe\\DllOverrides" /v d3dcompiler_47 /t REG_SZ /d native,builtin /f \
-        >/dev/null 2>&1 || { echo "    (chưa sửa được trình biên dịch shader cho game $id — bỏ qua)"; continue 2; }
-    done
-    : > "$WINEPREFIX/.kegplay_d3dc_$id"
+    grep -q '"StateFlags"[[:space:]]*"4"' "$mf" 2>/dev/null || continue
+    dir="$(sed -n 's/^[[:space:]]*"installdir"[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$mf" | tr -d '\r' | head -1)"
+    [ -n "$dir" ] && [ -d "$apps/common/$dir" ] && d3dc_fix_game "$id" "$apps/common/$dir"
   done
+  return 0
 }
 
 # Bộ đệm shader DXMT nằm ở thư mục đệm của macOS (<DARWIN_USER_CACHE_DIR>/dxmt/<tên exe>/) — CỐ Ý để nguyên ở đó:
