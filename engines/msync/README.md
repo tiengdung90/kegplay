@@ -1,6 +1,6 @@
 # msync for Wine 11 on macOS
 
-A patch that adds **msync** to upstream Wine 11.18 on macOS. msync is the Mach-semaphore synchronization backend that CrossOver uses. With it, Windows events, mutexes and semaphores are handled inside each process. Without it, every wait and wake goes through `wineserver`.
+A patch that adds **msync** to upstream Wine 11.18 and 11.19 on macOS. msync is the Mach-semaphore synchronization backend that CrossOver uses. With it, Windows events, mutexes and semaphores are handled inside each process. Without it, every wait and wake goes through `wineserver`.
 
 Free Wine builds for macOS, such as [Gcenx/macOS_Wine_builds](https://github.com/Gcenx/macOS_Wine_builds), ship without msync. The original [wine-msync](https://github.com/marzent/wine-msync) patches target Wine 9.x and do not apply to Wine 11, which reworked its synchronization code around `inproc_sync` (the framework NTSYNC uses on Linux). CrossOver 26 plugs msync into that framework, and this patch carries that design over to Wine 11.18.
 
@@ -17,6 +17,16 @@ Measured on an M2 Pro with `tools/diag/syncbench.c` (a small Windows program; it
 | Semaphore producer/consumer | 87,177 operations/s | 808,730 (×9.3) |
 
 All four correctness checks pass in both modes. Run with `WINEMSYNC=0`, the patched build performs the same as the stock Gcenx binaries (43,355 / 99,087 / 88,747 in the same test), so the gain comes from msync itself and not from how it was built.
+
+**Wine 11.19:** the same patch applies to upstream Wine 11.19 without offsets (the server protocol did not change between 11.18 and 11.19). A full x86_64 build of 11.19 with the patch, run from its build tree:
+
+| Test | `WINEMSYNC=0` | `WINEMSYNC=1` |
+|---|---|---|
+| Events | 41,288 round trips/s | 191,289 (×4.6) |
+| Mutex, four threads | 92,866 acquisitions/s | 1,039,522 (×11.2) |
+| Semaphore | 85,961 operations/s | 717,032 (×8.3) |
+
+All correctness checks pass. Only `syncbench` was run on 11.19; no games.
 
 In a real game (Mount & Blade II: Bannerlord, DXMT), `wineserver` dropped from about 16% to about 4% of one core, and the tester reported less stutter in dialogue and loading. Frame rates were not measured.
 
