@@ -3,6 +3,12 @@ import Foundation
 import SwiftUI
 
 /// Một game Steam đã cài trong bottle (đọc từ steamapps/appmanifest_<id>.acf).
+/// Cảnh báo của "bác sĩ" (scripts/doctor.pl) cho một game: mã phát hiện (khớp mục trên kegplay.com/debug) + mức nặng.
+struct GameIssue: Sendable, Equatable {
+    let id: String
+    let bad: Bool          // true = không chạy được (đỏ); false = có thể có vấn đề (cam)
+}
+
 struct Game: Identifiable, Hashable {
     let id: String          // Steam AppID
     let name: String
@@ -24,6 +30,7 @@ final class Backend: ObservableObject {
     @Published var engine = "dxmt"          // công nghệ đang cấu hình cho bottle
     @Published var unblock = false          // bộ vượt chặn Steam Store
     @Published var games: [Game] = []
+    @Published var issues: [String: GameIssue] = [:]   // appid → cảnh báo nặng nhất của bác sĩ
     @Published var busy = false
     @Published var busyTitle = ""
     @Published var busyDetail = ""
@@ -39,6 +46,7 @@ final class Backend: ObservableObject {
     let release: String          // số phát hành trong file VERSION: "0.1.0"
     let buildNumber: String
     private var timer: Timer?
+    private var doctorKey: String?      // danh sách game đã khám lần trước; đổi thì khám lại
     private var fixedGames: Set<String>?     // game đã tải xong mà app đã xét sửa hiển thị; nil = chưa quét lần nào
     private let inputGuard = InputGuard()
 
@@ -95,6 +103,12 @@ final class Backend: ObservableObject {
     }
 
     func openHelp() { NSWorkspace.shared.open(helpURL) }
+    /// Mở đúng mục trên trang gỡ lỗi (kegplay.com/debug#<mã>)
+    func openHelp(anchor: String) {
+        var c = URLComponents(url: helpURL, resolvingAgainstBaseURL: false)!
+        c.fragment = anchor
+        NSWorkspace.shared.open(c.url ?? helpURL)
+    }
     func openReleases() { NSWorkspace.shared.open(Backend.releasesPage) }
 
     /// Hỏi GitHub bản phát hành mới nhất (địa chỉ công khai, không gửi dữ liệu gì). Lỗi/mất mạng/chưa có bản
@@ -172,6 +186,7 @@ final class Backend: ObservableObject {
                 self.games = found
                 self.steamRunning = running
                 self.fixNewGames(found)
+                self.runDoctor(found)
             }
         }
     }
@@ -186,6 +201,39 @@ final class Backend: ObservableObject {
         fixedGames = ready
         guard !fresh.isEmpty else { return }
         Task { for id in fresh.sorted() { _ = await runScript("apply-fixes.sh", [id]) } }
+    }
+
+    /// Khám các game đã tải xong (đọc file chạy của game: DirectX 12, DirectX 9, DirectDraw, anti-cheat…) mỗi khi
+    /// danh sách đổi. Chỉ giữ cảnh báo (warn/bad) — game ổn thì thẻ không hiện gì thêm. Chỉ đọc, ~0,2 giây.
+    private func runDoctor(_ found: [Game]) {
+        let key = found.filter(\.ready).map(\.id).sorted().joined(separator: ",")
+        guard key != doctorKey else { return }
+        doctorKey = key
+        let script = codeRoot.appendingPathComponent("scripts/doctor.sh").path
+        let data = dataRoot.path
+        Task.detached {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/bin/bash")
+            p.arguments = [script]
+            p.environment = ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": NSHomeDirectory(),
+                             "KEGPLAY_DATA": data, "LANG": "en_US.UTF-8"]
+            let pipe = Pipe()
+            p.standardOutput = pipe
+            p.standardError = FileHandle.nullDevice
+            guard (try? p.run()) != nil else { return }
+            let out = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+            p.waitUntilExit()
+            var res: [String: GameIssue] = [:]
+            for line in out.split(separator: "\n") {
+                let c = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+                guard c.count >= 4, c[0] != "-", c[2] == "warn" || c[2] == "bad" else { continue }
+                let issue = GameIssue(id: c[3], bad: c[2] == "bad")
+                if let old = res[c[0]], old.bad || !issue.bad { continue }
+                res[c[0]] = issue
+            }
+            let result = res
+            await MainActor.run { self.issues = result }
+        }
     }
 
     nonisolated static func processList() -> [String] {

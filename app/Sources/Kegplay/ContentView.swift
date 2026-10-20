@@ -140,7 +140,7 @@ struct ContentView: View {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 230, maximum: 320), spacing: 14)], spacing: 14) {
                         ForEach(backend.games) { game in
-                            GameCard(game: game) { Task { await backend.play(game, engine: selectedEngine) } }
+                            GameCard(game: game, issue: backend.issues[game.id], openHelp: { backend.openHelp(anchor: $0) }) { Task { await backend.play(game, engine: selectedEngine) } }
                         }
                     }
                     .padding(18)
@@ -179,6 +179,8 @@ struct ContentView: View {
 
 struct GameCard: View {
     let game: Game
+    var issue: GameIssue? = nil
+    var openHelp: (String) -> Void = { _ in }
     let play: () -> Void
 
     var body: some View {
@@ -199,6 +201,15 @@ struct GameCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(game.name).font(.callout.bold()).lineLimit(1)
                     Text(game.ready ? game.sizeText : L("game.downloading")).font(.caption).foregroundStyle(.secondary)
+                    if let issue, game.ready {
+                        Button { openHelp(issue.id) } label: {
+                            Label(L("doctor.\(issue.id)"), systemImage: issue.bad ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
+                                .font(.caption).lineLimit(1)
+                                .foregroundStyle(issue.bad ? Color.red : Color.orange)
+                        }
+                        .buttonStyle(.plain)
+                        .help(L("doctor.more"))
+                    }
                 }
                 Spacer()
                 Button(action: play) { Label(L("btn.play"), systemImage: "play.fill") }
