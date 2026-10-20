@@ -19,6 +19,8 @@ build() { # <tên>
     x86_64-w64-mingw32-gcc -O1 -o "$exe" "$HERE/$1.c" -luser32
   fi
   cp "$exe" "$WINEPREFIX/drive_c/$1.exe"
+  # dọn file đã chép vào bottle khi xong (kết quả winprobe được chuyển sang $OUT để đọc lại)
+  trap 'rm -f "$WINEPREFIX/drive_c/'"$1"'.exe"; [ -f "$WINEPREFIX/drive_c/winprobe.txt" ] && mv -f "$WINEPREFIX/drive_c/winprobe.txt" "$OUT/winprobe.txt"' EXIT
 }
 cmd="${1:?Dùng: $0 enumwin|winprobe|trace …}"; shift
 case "$cmd" in
