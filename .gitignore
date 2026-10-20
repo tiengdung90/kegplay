@@ -3,6 +3,7 @@ docs/
 *.md
 # Ngoại lệ duy nhất: README công khai của kho (tiếng Anh). Bản hướng dẫn tiếng Việt vẫn ở docs/README.md
 !/README.md
+!/engines/msync/README.md
 
 # Sản phẩm build
 dist/

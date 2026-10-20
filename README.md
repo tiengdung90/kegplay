@@ -90,7 +90,7 @@ Third-party components are downloaded from their authors' release pages on your 
 A few pieces are shipped prebuilt so that users do not need a compiler:
 
 - `prebuilt/cefwrap.exe` makes Steam's embedded browser start without GPU acceleration, which otherwise leaves the Steam window black under Wine. Source: `src/cefwrap/`.
-- `engines/msync/lib/ntdll.so` and `wineserver` are Wine 11.18 rebuilt with msync taken from the CrossOver 26.3 source. `engines/msync/build-msync.sh` reproduces the build.
+- `engines/msync/lib/ntdll.so` and `wineserver` are Wine 11.18 rebuilt with msync taken from the CrossOver 26.3 source. `engines/msync/build-msync.sh` reproduces the build. The same work is available as a standalone patch for any Wine 11.18 build on macOS: see [engines/msync](engines/msync/README.md).
 - `engines/dxmt/lib/winemac.so` is Wine's macOS driver rebuilt with a bridge that DXMT needs and three OpenGL fixes. The patches are in `engines/dxmt/bridge/` and `engines/dxmt/build-winemac.sh` reproduces the build.
 
 ## Build from source
