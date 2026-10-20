@@ -135,13 +135,29 @@ for my $mf (sort grep { /^appmanifest_\d+\.acf$/ } readdir $dh) {
     elsif (!$found) { out($id, $name, 'info', 'unknown-api', 'graphics API not detected from the executable') }
 }
 
-# ---- mạng: DNS của máy có từ chối tên máy chủ đăng nhập Steam không ----
+# ---- mạng: DNS bị chặn (không trả lời / trả 127.0.0.1) và trang bị chặn theo tên (SNI) ----
+# Mỗi dòng: "-  Network  <mức>  <mã>  <chi tiết>". dns-blocked / dns-sinkhole / sni-blocked là mức "ok" vì kegPlay đã tự xử lý
+# (dnsfallback, SpoofDPI); offline = "bad". Kiểm SNI = mở HTTPS tới IP thật (lấy từ 1.1.1.1), hết giờ mà IP vẫn thông = bị chặn.
 if ($net) {
-    my $host = 'cmp1-sgp1.steamserver.net';
-    my $sys = `/usr/bin/dig +short +time=3 +tries=1 $host A 2>/dev/null` =~ /\d+\.\d+\.\d+\.\d+/ ? 1 : 0;
-    my $isp = `/usr/bin/dig +time=3 +tries=1 $host A 2>/dev/null`;
-    my $pub = `/usr/bin/dig +short +time=3 +tries=1 \@1.1.1.1 $host A 2>/dev/null` =~ /\d+\.\d+\.\d+\.\d+/ ? 1 : 0;
-    if ($isp =~ /status: NXDOMAIN/ && $pub) { out('-', 'Network', 'ok', 'dns-blocked', 'your DNS hides Steam sign-in servers; kegPlay asks public DNS instead') }
-    elsif (!$pub && !$sys) { out('-', 'Network', 'bad', 'offline', 'Steam sign-in servers cannot be resolved at all') }
-    else { out('-', 'Network', 'ok', 'dns', 'Steam sign-in servers resolve normally') }
+    my $dig = sub { my ($srv, $h) = @_; my $o = `/usr/bin/dig +time=3 +tries=1 ${srv}$h A 2>/dev/null`;
+                    my @ip = $o =~ /^\S+\s+\d+\s+IN\s+A\s+(\d+\.\d+\.\d+\.\d+)/mg; ($o, @ip) };
+    my (@nx, @sink, @sni, $reach);
+    for my $h (qw(cmp1-sgp1.steamserver.net store.steampowered.com steamcommunity.com steampipe.akamaized.net)) {
+        my ($sys, @sip) = $dig->('', $h);
+        my (undef, @pip) = $dig->('@1.1.1.1 ', $h);
+        $reach ||= @pip;
+        push @nx, $h if !@sip && $sys =~ /NXDOMAIN|SERVFAIL/ && @pip;
+        push @sink, $h if @sip && !grep { !/^(127|0)\./ } @sip;
+        if ($h =~ /^(store\.steampowered\.com|steamcommunity\.com)$/ && @pip) {
+            my $code = `/usr/bin/curl -s -o /dev/null -m 6 --resolve $h:443:$pip[0] -w '%{http_code}' https://$h/ 2>/dev/null`;
+            push @sni, $h if $code eq '000';
+        }
+    }
+    if (!$reach) { out('-', 'Network', 'bad', 'offline', 'Steam servers cannot be resolved at all (no internet?)') }
+    else {
+        out('-', 'Network', 'ok', 'dns-blocked', "your DNS hides: @nx; kegPlay asks public DNS instead") if @nx;
+        out('-', 'Network', 'ok', 'dns-sinkhole', "your DNS points to 127.0.0.1: @sink; kegPlay asks public DNS instead") if @sink;
+        out('-', 'Network', 'ok', 'sni-blocked', "blocked by name: @sni; kegPlay routes them through its unblocker") if @sni;
+        out('-', 'Network', 'ok', 'dns', 'no blocking detected') unless @nx || @sink || @sni;
+    }
 }

@@ -487,6 +487,37 @@ final class Backend: ObservableObject {
             ("use-engine.sh", [want], [:]),
             ("run-steam.sh", [], [:]),
         ])
+        checkNetwork()
+    }
+
+    /// Kiểm mạng ngầm sau khi mở Steam (doctor.pl --net, ~10 giây): ghi kết quả vào Nhật ký. Chỉ báo người dùng khi
+    /// mạng chặn Store/cộng đồng theo tên mà họ đang tắt "Vượt chặn Store", hoặc không ra được mạng.
+    private var networkChecked = false
+    func checkNetwork() {
+        guard !networkChecked else { return }
+        networkChecked = true
+        let script = codeRoot.appendingPathComponent("scripts/doctor.sh").path
+        let data = dataRoot.path
+        Task.detached {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/bin/bash")
+            p.arguments = [script, "--net"]
+            p.environment = ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": NSHomeDirectory(),
+                             "KEGPLAY_DATA": data, "LANG": "en_US.UTF-8"]
+            let pipe = Pipe()
+            p.standardOutput = pipe
+            p.standardError = FileHandle.nullDevice
+            guard (try? p.run()) != nil else { return }
+            let out = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+            p.waitUntilExit()
+            let rows = out.split(separator: "\n").map { $0.split(separator: "\t", omittingEmptySubsequences: false).map(String.init) }
+                .filter { $0.count >= 5 && $0[1] == "Network" }
+            await MainActor.run {
+                for r in rows { self.log.append("Network: \(r[3]) — \(r[4])") }
+                if rows.contains(where: { $0[3] == "offline" }) { self.alert = L("net.offline") }
+                else if rows.contains(where: { $0[3] == "sni-blocked" }) && !self.unblock { self.alert = L("net.sniOff") }
+            }
+        }
     }
 
     func play(_ game: Game, engine want: String) async {

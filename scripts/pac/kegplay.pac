@@ -8,9 +8,15 @@
 //
 // steamserver.net (máy chủ đăng nhập "CM"): 2026-10-06 DNS nhà mạng không trả địa chỉ cho cmp*.steamserver.net
 // → Steam không đăng nhập được, mã QR không hiện. Đi qua SpoofDPI thì tên được phân giải bằng DoH.
+//
+// steamcommunity.com (cộng đồng, hồ sơ, Workshop) + steam-chat.com: 2026-10-20 có mạng chặn cả hai theo SNI giống Store
+// (đo bằng curl --resolve tới IP thật: hết giờ; qua SpoofDPI: 200). Ảnh/CDN (*.steamstatic.com, akamaihd, akamaized)
+// KHÔNG bị chặn theo SNI — chỉ bị DNS hố đen, việc đó do dnsfallback lo → vẫn để DIRECT.
 function FindProxyForURL(url, host) {
   if (host == "steampowered.com" || shExpMatch(host, "*.steampowered.com") ||
-      shExpMatch(host, "*.steamserver.net"))
+      shExpMatch(host, "*.steamserver.net") ||
+      host == "steamcommunity.com" || shExpMatch(host, "*.steamcommunity.com") ||
+      host == "steam-chat.com" || shExpMatch(host, "*.steam-chat.com"))
     return "PROXY 127.0.0.1:__DPI_PORT__; DIRECT";
   return "DIRECT";
 }
