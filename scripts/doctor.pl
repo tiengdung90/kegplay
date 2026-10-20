@@ -11,13 +11,34 @@
 # anti-cheat (EasyAntiCheat, BattlEye…) → nhiều khả năng không vào được chế độ online.
 use strict; use warnings;
 use File::Find;
+sub out { print join("\t", @_), "\n" }
 
-my $apps = shift or die "Dùng: $0 <steamapps> [--net]\n";
+# Chế độ đọc log (khám SAU khi lỗi):  perl doctor.pl --log <file log> [vị trí byte bắt đầu]
+# In các phát hiện như trên (appid "-"), mức "bad" = game văng. Luật:
+#   wine: Unhandled …            → game-crash      (Wine bắt được lỗi bộ nhớ/ngoại lệ không xử lý → game văng)
+#   err:module:import_dll … not found → missing-dll  (thiếu DLL hệ thống của Windows, vd bộ VC++ / .NET)
+#   E4002 / Error compiling shader → shader-compile-e4002
+if (@ARGV >= 1 && $ARGV[0] eq '--log') {
+    my (undef, $log, $from) = @ARGV;
+    open(my $fh, '<:raw', $log) or exit 0;
+    seek($fh, $from // 0, 0);
+    my (%seen, $crash);
+    while (my $l = <$fh>) {
+        if ($l =~ /^wine: Unhandled ([\w ]+?) (?:on|at|exception)/ && !$crash) { $crash = $1 }
+        elsif ($l =~ /err:module:import_dll (?:Library|Loading library) (\S+)/i && !$seen{"dll:$1"}++) {
+            out('-', '-', 'bad', 'missing-dll', "missing Windows library $1") }
+        elsif ($l =~ /E4002|Error compiling shader/ && !$seen{e4002}++) {
+            out('-', '-', 'bad', 'shader-compile-e4002', 'shader compile error') }
+    }
+    out('-', '-', 'bad', 'game-crash', "Wine: unhandled $crash") if $crash;
+    exit 0;
+}
+
+my $apps = shift or die "Dùng: $0 <steamapps> [--net] | --log <file> [offset]\n";
 my $net = grep { $_ eq '--net' } @ARGV;
 my %ddraw_fixed = map { $_ => 1 } split ' ', ($ENV{KEGPLAY_DDRAW_APPIDS} // '');
 my %d3dc_fixed  = map { (split /:/)[0] => 1 } split ' ', ($ENV{KEGPLAY_D3DC_FIXES} // '');
 
-sub out { print join("\t", @_), "\n" }
 
 # ---- đọc PE: trả (máy, {tên dll import viết thường}) hoặc () nếu không phải PE ----
 sub pe_imports {

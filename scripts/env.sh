@@ -45,7 +45,8 @@ export PATH="$WINE_BIN:$PATH"
 # và mọi tiến trình phải cùng bật hoặc cùng tắt).
 export WINEMSYNC="${WINEMSYNC:-1}"
 # Giảm log rác; debug thì chạy: WINEDEBUG=+err ./scripts/run.sh ...
-export WINEDEBUG="${WINEDEBUG:--all}"
+# err+module: chỉ in lỗi nạp DLL ("… not found") — ít dòng, để bác sĩ (doctor.pl --log) nhận ra game thiếu DLL
+export WINEDEBUG="${WINEDEBUG:--all,err+module}"
 
 # DNS dự phòng: DNS một số nhà mạng VN trả "không tồn tại" cho cmp*.steamserver.net (máy chủ đăng nhập Steam)
 # → không đăng nhập được, mã QR không hiện. Steam Windows tự phân giải tên, KHÔNG đi qua PAC/proxy, và Wine

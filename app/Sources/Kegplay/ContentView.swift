@@ -11,6 +11,7 @@ struct ContentView: View {
             header
             Divider()
             if let v = backend.updateVersion { updateBanner(v) }
+            if let c = backend.crash { crashBanner(c) }
             if backend.ready {
                 controls
                 Divider()
@@ -48,6 +49,24 @@ struct ContentView: View {
             statusPill
         }
         .padding(.horizontal, 18).padding(.vertical, 12)
+    }
+
+    /// Game vừa văng: lỗi đã biết → nút "Cách xử lý" (mở đúng mục trên web); lỗi lạ → "Gửi báo cáo" lên GitHub.
+    private func crashBanner(_ c: CrashReport) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(L("crash.title", c.game.name)).font(.callout.bold())
+                Text(L("doctor.\(c.finding)")).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            if c.known { Button(L("crash.help")) { backend.openHelp(anchor: c.finding) }.controlSize(.small) }
+            Button(L("crash.report")) { backend.openReport(c) }.controlSize(.small)
+            Button { backend.crash = nil } label: { Image(systemName: "xmark") }
+                .buttonStyle(.borderless).help(L("btn.close"))
+        }
+        .padding(.horizontal, 18).padding(.vertical, 7)
+        .background(Color.orange.opacity(0.10))
     }
 
     private func updateBanner(_ v: String) -> some View {
@@ -233,6 +252,7 @@ struct LogSheet: View {
             HStack {
                 Text(L("link.log")).font(.headline)
                 Spacer()
+                Button(L("crash.report")) { backend.openReport(nil) }
                 Button(L("log.openFolder")) { backend.openLogs() }
                 Button(L("btn.close")) { dismiss() }.keyboardShortcut(.defaultAction)
             }

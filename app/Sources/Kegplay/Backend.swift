@@ -9,11 +9,22 @@ struct GameIssue: Sendable, Equatable {
     let bad: Bool          // true = không chạy được (đỏ); false = có thể có vấn đề (cam)
 }
 
+/// Một lần game văng mà bác sĩ đọc log thấy (scripts/doctor.pl --log).
+struct CrashReport: Identifiable, Equatable {
+    let id = UUID()
+    let game: Game
+    let finding: String      // mã phát hiện nặng nhất (game-crash, missing-dll, shader-compile-e4002…)
+    let detail: String
+    let log: String          // đoạn log từ lúc game mở tới lúc văng (đã xoá thông tin riêng)
+    var known: Bool { finding != "game-crash" }
+}
+
 struct Game: Identifiable, Hashable {
     let id: String          // Steam AppID
     let name: String
     let sizeBytes: Int64
     let ready: Bool         // false = Steam đang tải/cập nhật game này → chưa cho bấm Chơi
+    var installDir: String = ""   // steamapps/common/<installDir> — để nhận tiến trình game đang chạy
 
     var coverURL: URL? { URL(string: "https://cdn.cloudflare.steamstatic.com/steam/apps/\(id)/header.jpg") }
     var sizeText: String { ByteCountFormatter.string(fromByteCount: sizeBytes, countStyle: .file) }
@@ -31,6 +42,7 @@ final class Backend: ObservableObject {
     @Published var unblock = false          // bộ vượt chặn Steam Store
     @Published var games: [Game] = []
     @Published var issues: [String: GameIssue] = [:]   // appid → cảnh báo nặng nhất của bác sĩ
+    @Published var crash: CrashReport?                 // game vừa văng → dải báo trong cửa sổ
     @Published var busy = false
     @Published var busyTitle = ""
     @Published var busyDetail = ""
@@ -47,6 +59,7 @@ final class Backend: ObservableObject {
     let buildNumber: String
     private var timer: Timer?
     private var doctorKey: String?      // danh sách game đã khám lần trước; đổi thì khám lại
+    private var runningGames: [String: (log: URL, offset: UInt64)] = [:]   // appid → log Steam + vị trí lúc game mở
     private var fixedGames: Set<String>?     // game đã tải xong mà app đã xét sửa hiển thị; nil = chưa quét lần nào
     private let inputGuard = InputGuard()
 
@@ -178,6 +191,10 @@ final class Backend: ObservableObject {
             let ownServer = lines.contains { $0.contains(serverMarker) && $0.contains("wineserver") }
             let running = lines.contains { $0.contains(marker) }
                 || (ownServer && lines.contains { $0.contains("\\steam\\steam.exe") })
+            // game đang chạy = có tiến trình Windows nằm trong steamapps\common\<thư mục game>\
+            let playing = Set(found.filter { g in
+                !g.installDir.isEmpty && lines.contains { $0.contains("\\steamapps\\common\\" + g.installDir.lowercased() + "\\") }
+            }.map(\.id))
             await MainActor.run {
                 self.wineInstalled = wine
                 self.steamInstalled = steam
@@ -187,6 +204,7 @@ final class Backend: ObservableObject {
                 self.steamRunning = running
                 self.fixNewGames(found)
                 self.runDoctor(found)
+                self.watchGames(playing, found)
             }
         }
     }
@@ -236,6 +254,108 @@ final class Backend: ObservableObject {
         }
     }
 
+    /// Khám SAU khi lỗi: nhớ vị trí cuối log Steam lúc game bắt đầu chạy; game biến mất thì đọc phần log từ đó
+    /// (doctor.pl --log). Có dấu hiệu văng / thiếu DLL / lỗi shader → hiện dải báo, kèm nút xem cách xử lý hoặc gửi báo cáo.
+    private func watchGames(_ playing: Set<String>, _ found: [Game]) {
+        for id in playing where runningGames[id] == nil {
+            if let log = latestSteamLog() {
+                let size = (try? FileManager.default.attributesOfItem(atPath: log.path)[.size] as? UInt64) ?? 0
+                runningGames[id] = (log, size ?? 0)
+            }
+        }
+        for (id, start) in runningGames where !playing.contains(id) {
+            runningGames[id] = nil
+            guard let game = found.first(where: { $0.id == id }) else { continue }
+            let script = codeRoot.appendingPathComponent("scripts/doctor.sh").path
+            let data = dataRoot.path
+            Task.detached {
+                // chờ Wine ghi nốt log
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                let p = Process()
+                p.executableURL = URL(fileURLWithPath: "/bin/bash")
+                p.arguments = [script, "--log", start.log.path, String(start.offset)]
+                p.environment = ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": NSHomeDirectory(),
+                                 "KEGPLAY_DATA": data, "LANG": "en_US.UTF-8"]
+                let pipe = Pipe()
+                p.standardOutput = pipe
+                p.standardError = FileHandle.nullDevice
+                guard (try? p.run()) != nil else { return }
+                let out = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+                p.waitUntilExit()
+                let rows = out.split(separator: "\n").map { $0.split(separator: "\t", omittingEmptySubsequences: false).map(String.init) }
+                    .filter { $0.count >= 5 && $0[2] == "bad" }
+                guard !rows.isEmpty else { return }
+                // ưu tiên nguyên nhân cụ thể (thiếu DLL, lỗi shader) hơn "văng" chung chung
+                let pick = rows.first { $0[3] != "game-crash" } ?? rows[0]
+                let log = Backend.logExcerpt(start.log, from: start.offset)
+                await MainActor.run {
+                    self.crash = CrashReport(game: game, finding: pick[3], detail: pick[4], log: log)
+                }
+            }
+        }
+    }
+
+    private func latestSteamLog() -> URL? {
+        let dir = dataRoot.appendingPathComponent("logs")
+        let files = ((try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? [])
+            .filter { $0.range(of: #"^steam-\d{8}-\d{6}\.log$"#, options: .regularExpression) != nil }.sorted()   // không lấy steam-bootstrap.log
+        return files.last.map { dir.appendingPathComponent($0) }
+    }
+
+    /// 60 dòng cuối của log kể từ vị trí `from`, đã xoá tên tài khoản và đường dẫn thư mục người dùng.
+    nonisolated static func logExcerpt(_ url: URL, from: UInt64) -> String {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return "" }
+        defer { try? h.close() }
+        try? h.seek(toOffset: from)
+        let text = String(decoding: h.readDataToEndOfFile(), as: UTF8.self)
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).suffix(60).joined(separator: "\n")
+        return sanitize(String(lines.suffix(4000)))
+    }
+
+    nonisolated static func sanitize(_ s: String) -> String {
+        var t = s.replacingOccurrences(of: NSHomeDirectory(), with: "~")
+        let user = NSUserName()
+        if user.count >= 3 { t = t.replacingOccurrences(of: user, with: "<user>", options: .caseInsensitive) }
+        return t
+    }
+
+    /// Trang tạo Issue trên GitHub, đã điền sẵn. Người dùng xem lại và tự bấm gửi — kegPlay không tự gửi gì.
+    func reportURL(_ r: CrashReport?) -> URL {
+        var size = 0
+        sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
+        var buf = [CChar](repeating: 0, count: max(size, 1))
+        sysctlbyname("machdep.cpu.brand_string", &buf, &size, nil, 0)
+        let chip = String(cString: buf)
+        let os = ProcessInfo.processInfo.operatingSystemVersionString
+        let title = r.map { "[\($0.game.name)] \($0.finding)" } ?? "Problem report"
+        var body = """
+        **kegPlay** \(version) · engine \(engine.uppercased())
+        **macOS** \(os) · **Chip** \(chip)
+
+        """
+        if let r {
+            body += """
+            **Game** \(r.game.name) (AppID \(r.game.id))
+            **kegPlay detected** `\(r.finding)` \(r.detail)
+
+            """
+        }
+        body += """
+        **What happened** (please describe what you did and what you saw):
+
+
+        **Log**
+        ```
+        \(r?.log ?? Backend.sanitize(log.suffix(60).joined(separator: "\n")))
+        ```
+        """
+        var c = URLComponents(string: "https://github.com/\(Backend.repoSlug)/issues/new")!
+        c.queryItems = [URLQueryItem(name: "title", value: title), URLQueryItem(name: "body", value: body)]
+        return c.url!
+    }
+
+    func openReport(_ r: CrashReport?) { NSWorkspace.shared.open(reportURL(r)) }
+
     nonisolated static func processList() -> [String] {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/bin/ps")
@@ -271,7 +391,7 @@ final class Backend: ObservableObject {
             // Không hiện % vì Steam chỉ thỉnh thoảng mới ghi BytesDownloaded vào file này (lệch xa thực tế).
             let flags = Int(value("StateFlags") ?? "0") ?? 0
             out.append(Game(id: id, name: name, sizeBytes: Int64(value("SizeOnDisk") ?? "0") ?? 0,
-                            ready: flags & 4 != 0 && flags & 2 == 0))
+                            ready: flags & 4 != 0 && flags & 2 == 0, installDir: value("installdir") ?? ""))
         }
         return out.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
