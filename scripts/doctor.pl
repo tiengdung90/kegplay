@@ -13,20 +13,28 @@ use strict; use warnings;
 use File::Find;
 sub out { print join("\t", @_), "\n" }
 
-# Chế độ đọc log (khám SAU khi lỗi):  perl doctor.pl --log <file log> [vị trí byte bắt đầu]
+# Chế độ đọc log (khám SAU khi lỗi):  perl doctor.pl --log <file log> <vị trí lúc game mở> <vị trí ~vài giây trước khi game tắt> <installdir>
+# Chỉ tính DLL thiếu cho file nằm trong steamapps\common\<installdir>\ (Steam cũng có công cụ phụ thiếu DLL vô hại, vd
+# gldriverquery.exe cần SDL2.dll). "wine: Unhandled" không ghi tên tiến trình → chỉ tính khi nó nằm trong vài giây cuối.
 # In các phát hiện như trên (appid "-"), mức "bad" = game văng. Luật:
 #   wine: Unhandled …            → game-crash      (Wine bắt được lỗi bộ nhớ/ngoại lệ không xử lý → game văng)
 #   err:module:import_dll … not found → missing-dll  (thiếu DLL hệ thống của Windows, vd bộ VC++ / .NET)
 #   E4002 / Error compiling shader → shader-compile-e4002
 if (@ARGV >= 1 && $ARGV[0] eq '--log') {
-    my (undef, $log, $from) = @ARGV;
+    my (undef, $log, $from, $tail, $dir) = @ARGV;
+    $from //= 0; $tail //= $from;
+    my $mine = defined $dir && length $dir ? qr/\\{1,2}steamapps\\{1,2}common\\{1,2}\Q$dir\E\\{1,2}/i : qr/\\{1,2}steamapps\\{1,2}common\\{1,2}/i;
     open(my $fh, '<:raw', $log) or exit 0;
-    seek($fh, $from // 0, 0);
+    seek($fh, $from, 0);
     my (%seen, $crash);
     while (my $l = <$fh>) {
-        if ($l =~ /^wine: Unhandled ([\w ]+?) (?:on|at|exception)/ && !$crash) { $crash = $1 }
-        elsif ($l =~ /err:module:import_dll (?:Library|Loading library) (\S+)/i && !$seen{"dll:$1"}++) {
-            out('-', '-', 'bad', 'missing-dll', "missing Windows library $1") }
+        my $pos = tell($fh);
+        if ($l =~ /^wine: Unhandled ([\w ]+?) (?:on|at|exception)/ && !$crash) { $crash = $1 if $pos > $tail }
+        elsif ($l =~ /err:module:import_dll (?:Library|Loading library) (\S+).*needed by L"([^"]+)"/i) {
+            my ($dll, $by) = ($1, $2);
+            next if $seen{"dll:$dll"} || $by !~ $mine;
+            $seen{"dll:$dll"} = 1;
+            out('-', '-', 'bad', 'missing-dll', "missing Windows library $dll") }
         elsif ($l =~ /E4002|Error compiling shader/ && !$seen{e4002}++) {
             out('-', '-', 'bad', 'shader-compile-e4002', 'shader compile error') }
     }

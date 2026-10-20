@@ -59,7 +59,7 @@ final class Backend: ObservableObject {
     let buildNumber: String
     private var timer: Timer?
     private var doctorKey: String?      // danh sách game đã khám lần trước; đổi thì khám lại
-    private var runningGames: [String: (log: URL, offset: UInt64)] = [:]   // appid → log Steam + vị trí lúc game mở
+    private var runningGames: [String: (log: URL, offset: UInt64, recent: [UInt64])] = [:]   // appid → log Steam, vị trí lúc mở, vị trí 3 lần quét gần nhất
     private var fixedGames: Set<String>?     // game đã tải xong mà app đã xét sửa hiển thị; nil = chưa quét lần nào
     private let inputGuard = InputGuard()
 
@@ -257,10 +257,13 @@ final class Backend: ObservableObject {
     /// Khám SAU khi lỗi: nhớ vị trí cuối log Steam lúc game bắt đầu chạy; game biến mất thì đọc phần log từ đó
     /// (doctor.pl --log). Có dấu hiệu văng / thiếu DLL / lỗi shader → hiện dải báo, kèm nút xem cách xử lý hoặc gửi báo cáo.
     private func watchGames(_ playing: Set<String>, _ found: [Game]) {
-        for id in playing where runningGames[id] == nil {
-            if let log = latestSteamLog() {
-                let size = (try? FileManager.default.attributesOfItem(atPath: log.path)[.size] as? UInt64) ?? 0
-                runningGames[id] = (log, size ?? 0)
+        for id in playing {
+            if let cur = runningGames[id] {
+                let size = ((try? FileManager.default.attributesOfItem(atPath: cur.log.path)[.size] as? UInt64) ?? 0) ?? 0
+                runningGames[id]?.recent = Array((cur.recent + [size]).suffix(3))   // ~6–9 giây gần nhất
+            } else if let log = latestSteamLog() {
+                let size = ((try? FileManager.default.attributesOfItem(atPath: log.path)[.size] as? UInt64) ?? 0) ?? 0
+                runningGames[id] = (log, size, [size])
             }
         }
         for (id, start) in runningGames where !playing.contains(id) {
@@ -273,7 +276,8 @@ final class Backend: ObservableObject {
                 try? await Task.sleep(nanoseconds: 1_500_000_000)
                 let p = Process()
                 p.executableURL = URL(fileURLWithPath: "/bin/bash")
-                p.arguments = [script, "--log", start.log.path, String(start.offset)]
+                p.arguments = [script, "--log", start.log.path, String(start.offset),
+                               String(start.recent.first ?? start.offset), game.installDir]
                 p.environment = ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": NSHomeDirectory(),
                                  "KEGPLAY_DATA": data, "LANG": "en_US.UTF-8"]
                 let pipe = Pipe()
