@@ -127,7 +127,7 @@ If your problem is not listed, open an [issue](https://github.com/tiengdung90/ke
 
 ## Credits
 
-kegPlay stands on the work of [Wine](https://www.winehq.org), [DXMT](https://github.com/3Shain/dxmt), [DXVK](https://github.com/doitsujin/dxvk) and [DXVK-macOS](https://github.com/Gcenx/DXVK-macOS), [MoltenVK](https://github.com/KhronosGroup/MoltenVK), [SpoofDPI](https://github.com/xvzc/SpoofDPI) and the [macOS Wine builds](https://github.com/Gcenx/macOS_Wine_builds) by Gcenx. Licenses and source locations are listed in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+kegPlay stands on the work of [Wine](https://www.winehq.org), [DXMT](https://github.com/3Shain/dxmt), [DXVK](https://github.com/doitsujin/dxvk) and [DXVK-macOS](https://github.com/Gcenx/DXVK-macOS), [MoltenVK](https://github.com/KhronosGroup/MoltenVK), [SpoofDPI](https://github.com/xvzc/SpoofDPI), [msync](https://github.com/marzent/wine-msync) by Marc-Aurel Zent (taken from the [CrossOver source release](https://www.codeweavers.com/crossover/source) by CodeWeavers) and the [macOS Wine builds](https://github.com/Gcenx/macOS_Wine_builds) by Gcenx. Licenses and source locations are listed in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
 
 ## License
 
