@@ -47,6 +47,13 @@ build_dxmt_runtime() {  # WINE_DXMT = bản nhân APFS của WINE_BASE + DXMT; d
   done
   cp "$DXMT_DIR/x86_64-unix/winemetal.so" "$lib/x86_64-unix/"
   cp "$WINEMAC_DXMT" "$lib/x86_64-unix/winemac.so"
+  # msync: ntdll.so + wineserver đi CẶP (giao thức khác bản gốc), chỉ khi dựng cho đúng bản Wine này
+  if [ "$(cat "$ENGINES_DIR/msync/lib/msync.wine" 2>/dev/null)" = "$WINE_FLAVOR-$WINE_VERSION" ] \
+     && [ -f "$ENGINES_DIR/msync/lib/ntdll.so" ] && [ -f "$ENGINES_DIR/msync/lib/wineserver" ]; then
+    cp "$ENGINES_DIR/msync/lib/ntdll.so" "$lib/x86_64-unix/ntdll.so"
+    cp "$ENGINES_DIR/msync/lib/wineserver" "$WINE_DXMT/bin/wineserver"
+    codesign -f -s - "$lib/x86_64-unix/ntdll.so" "$WINE_DXMT/bin/wineserver" >/dev/null 2>&1 || true
+  fi
   echo "$want" > "$DXMT_STAMP"
 }
 

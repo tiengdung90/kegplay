@@ -22,7 +22,7 @@ WINE_DXMT="$KEGPLAY_DATA/runtime/wine-dxmt-${WINE_VERSION}"
 ENGINES_DIR="$KEGPLAY_ROOT/engines"
 DXMT_VER="${DXMT_VER:-v0.80}"
 # Dấu của runtime DXMT = phiên bản DXMT + mã băm winemac.so đã cài; lệch dấu = runtime cũ, cần dựng lại
-dxmt_stamp_want() { echo "$DXMT_VER $(shasum "$ENGINES_DIR/dxmt/lib/winemac.so" 2>/dev/null | cut -c1-16)"; }
+dxmt_stamp_want() { echo "$DXMT_VER $(cat "$ENGINES_DIR/dxmt/lib/winemac.so" "$ENGINES_DIR/msync/lib/ntdll.so" "$ENGINES_DIR/msync/lib/wineserver" 2>/dev/null | shasum | cut -c1-16)"; }
 dxmt_runtime_fresh() { [ -x "$WINE_DXMT/bin/wine" ] && [ "$(cat "$WINE_DXMT/.kegplay-dxmt" 2>/dev/null)" = "$(dxmt_stamp_want)" ]; }
 
 BOTTLE="${BOTTLE:-steam}"
@@ -39,8 +39,10 @@ fi
 WINE_BIN="$WINE_HOME/bin"
 export PATH="$WINE_BIN:$PATH"
 
-# msync (đồng bộ bằng Mach semaphore của CrossOver/Whisky): KIỂM 2026-09-29 — ntdll.so của Gcenx 11.18
-# (cả Devel lẫn Staging) KHÔNG có msync/esync/fsync → biến này vô tác dụng, giữ để dùng nếu đổi sang Wine có msync.
+# msync (đồng bộ bằng Mach semaphore, lấy từ mã CrossOver 26.3): Wine Gcenx 11.18 không có; kegPlay tự dựng ntdll.so +
+# wineserver có msync (engines/msync/build-msync.sh) và graphics.sh chép vào runtime DXMT. Chỉ chạy khi biến này = 1.
+# Runtime DXVK/WineD3D (Wine gốc) bỏ qua biến. Tắt khi gỡ lỗi: WINEMSYNC=0 (phải tắt hẳn Steam trước, vì wineserver
+# và mọi tiến trình phải cùng bật hoặc cùng tắt).
 export WINEMSYNC="${WINEMSYNC:-1}"
 # Giảm log rác; debug thì chạy: WINEDEBUG=+err ./scripts/run.sh ...
 export WINEDEBUG="${WINEDEBUG:--all}"

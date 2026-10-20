@@ -26,6 +26,7 @@ It is a thin, readable layer of shell scripts with a SwiftUI front end. Nothing 
 
 - **One-click setup.** Downloads Wine, creates the Windows environment and installs Steam for you.
 - **Two graphics engines.** [DXMT](https://github.com/3Shain/dxmt) translates Direct3D 11 straight to Metal and is the default. [DXVK](https://github.com/Gcenx/DXVK-macOS) is the fallback for games that dislike DXMT. Switch with one click.
+- **Faster thread synchronization.** With DXMT, kegPlay ships [msync](https://github.com/marzent/wine-msync), the Mach-semaphore backend from CrossOver, so Windows events, mutexes and semaphores are handled inside the game instead of going through wineserver. In a synthetic test this is 3 to 11 times faster; in Bannerlord it means fewer hitches and less CPU load.
 - **The Steam Store loads.** A built-in unblocker for networks that block the Store. It applies only to Steam inside kegPlay and never touches your Mac's network settings.
 - **Sign-in that does not hang.** A DNS fallback steps in when an ISP's DNS refuses to resolve Steam's sign-in servers.
 - **No input-method trouble.** Switches the keyboard to ABC while a game window is active and restores your input method when you leave.
@@ -77,7 +78,7 @@ The list is short because the project is new. Offline games that use DirectX 9, 
  scripts/*.sh ── setup · install Steam · open / stop Steam · launch a game · switch engine
       │
       ├─ Wine 11.18 (x86-64, through Rosetta 2) with one Windows "bottle"
-      │     ├─ DXMT   Direct3D 10/11 → Metal                (default)
+      │     ├─ DXMT   Direct3D 10/11 → Metal                (default, with msync)
       │     └─ DXVK   Direct3D 10/11 → Vulkan → MoltenVK → Metal
       ├─ SpoofDPI + a local PAC file     Steam Store unblocker, scoped to the bottle
       └─ dnsfallback.dylib               retries failed lookups against public DNS
@@ -85,9 +86,10 @@ The list is short because the project is new. Offline games that use DirectX 9, 
 
 Third-party components are downloaded from their authors' release pages on your machine. This repository does not redistribute Wine, DXMT, DXVK or Steam.
 
-Two small pieces are shipped prebuilt so that users do not need a compiler:
+A few pieces are shipped prebuilt so that users do not need a compiler:
 
 - `prebuilt/cefwrap.exe` makes Steam's embedded browser start without GPU acceleration, which otherwise leaves the Steam window black under Wine. Source: `src/cefwrap/`.
+- `engines/msync/lib/ntdll.so` and `wineserver` are Wine 11.18 rebuilt with msync taken from the CrossOver 26.3 source. `engines/msync/build-msync.sh` reproduces the build.
 - `engines/dxmt/lib/winemac.so` is Wine's macOS driver rebuilt with a bridge that DXMT needs and three OpenGL fixes. The patches are in `engines/dxmt/bridge/` and `engines/dxmt/build-winemac.sh` reproduces the build.
 
 ## Build from source

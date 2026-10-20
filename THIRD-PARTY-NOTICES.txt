@@ -30,6 +30,19 @@ engines/dxmt/lib/winemac.so
       - exact build steps: engines/dxmt/build-winemac.sh
     You may replace this file with your own build made by that script.
 
+engines/msync/lib/ntdll.so, engines/msync/lib/wineserver
+    Rebuilds of ntdll.so and wineserver from Wine 11.18 (LGPL 2.1 or later) with msync added. msync is the
+    Mach-semaphore synchronization backend written by Marc-Aurel Zent (CodeWeavers), building on esync/fsync
+    by Zebediah Figura. It is licensed under the LGPL 2.1 or later. The complete corresponding source is:
+      - unmodified Wine 11.18: https://dl.winehq.org/wine/source/11.x/wine-11.18.tar.xz
+      - the msync files, copied unchanged from the CrossOver 26.3.0 source release
+        (https://media.codeweavers.com/pub/crossover/source/crossover-sources-26.3.0.tar.gz):
+          engines/msync/src/dlls/ntdll/unix/msync.c, msync.h; engines/msync/src/server/msync.c, msync.h,
+          inproc_sync.c (only its msync block is used)
+      - how they are wired into Wine 11.18: engines/msync/port-msync.py
+      - exact build steps: engines/msync/build-msync.sh
+    You may replace these two files with your own build made by that script. Always replace both together.
+
 prebuilt/cefwrap.exe
     Built from src/cefwrap/cefwrap.c (kegPlay code, MIT). The idea of passing "--disable-gpu --single-process"
     to steamwebhelper.exe comes from https://github.com/ByMedion/macos-wine-steam (PR #8).

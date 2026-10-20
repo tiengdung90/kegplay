@@ -17,6 +17,7 @@ mkdir -p "$STAGE" "$OUT"
 [ src/dnsfallback/dnsfallback.c -nt prebuilt/dnsfallback.dylib ] && { echo "LỖI: dnsfallback.c mới hơn bản dựng sẵn — chạy tools/build-dnsfallback.sh"; exit 1; }
 [ -f engines/dxmt/lib/winemac.so ] && [ -f engines/dxmt/lib/winemac.so.wine ] || { echo "LỖI: thiếu engines/dxmt/lib/winemac.so(.wine) — chạy engines/dxmt/build-winemac.sh"; exit 1; }
 nm -gU engines/dxmt/lib/winemac.so | grep -q " _macdrv_functions$" || { echo "LỖI: winemac.so không xuất macdrv_functions"; exit 1; }
+for f in engines/msync/port-msync.py engines/msync/src/*/*; do [ "$f" -nt engines/msync/lib/ntdll.so ] && { echo "LỖI: $f mới hơn bản msync đã dựng — chạy engines/msync/build-msync.sh"; exit 1; }; done
 for f in engines/dxmt/bridge/*; do [ "$f" -nt engines/dxmt/lib/winemac.so ] && { echo "LỖI: $f mới hơn winemac.so — build lại"; exit 1; }; done
 
 cp LICENSE THIRD-PARTY-NOTICES.txt VERSION install.sh "$STAGE/"
@@ -36,6 +37,9 @@ cp engines/dxmt/build-winemac.sh "$STAGE/engines/dxmt/"
 cp engines/dxmt/bridge/* "$STAGE/engines/dxmt/bridge/"
 cp engines/dxmt/lib/winemac.so engines/dxmt/lib/winemac.so.wine "$STAGE/engines/dxmt/lib/"
 cp engines/dxvk/dxvk.conf "$STAGE/engines/dxvk/"
+mkdir -p "$STAGE/engines/msync/lib"
+cp -R engines/msync/src engines/msync/build-msync.sh engines/msync/port-msync.py "$STAGE/engines/msync/"
+cp engines/msync/lib/ntdll.so engines/msync/lib/wineserver engines/msync/lib/msync.wine "$STAGE/engines/msync/lib/"
 find "$STAGE" -name '.DS_Store' -delete
 chmod +x "$STAGE"/install.sh "$STAGE"/*.command "$STAGE"/scripts/*.sh "$STAGE"/scripts/*.pl "$STAGE"/engines/dxmt/build-winemac.sh
 
