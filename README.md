@@ -27,11 +27,11 @@ It is a thin, readable layer of shell scripts with a SwiftUI front end. Nothing 
 - **One-click setup.** Downloads Wine, creates the Windows environment and installs Steam for you.
 - **Two graphics engines.** [DXMT](https://github.com/3Shain/dxmt) translates Direct3D 11 straight to Metal and is the default. [DXVK](https://github.com/Gcenx/DXVK-macOS) is the fallback for games that dislike DXMT. Switch with one click.
 - **Faster thread synchronization.** With DXMT, kegPlay ships [msync](https://github.com/marzent/wine-msync), the Mach-semaphore backend from CrossOver, so Windows events, mutexes and semaphores are handled inside the game instead of going through wineserver. In a synthetic test this is 3 to 11 times faster; in Bannerlord it means fewer hitches and less CPU load.
-- **The Steam Store loads.** A built-in unblocker for networks that block the Store. It applies only to Steam inside kegPlay and never touches your Mac's network settings.
-- **Sign-in that does not hang.** A DNS fallback steps in when an ISP's DNS refuses to resolve Steam's sign-in servers.
+- **Works on networks that block Steam.** A built-in unblocker gets the Store, Community and chat through networks that block them by name, and a DNS fallback steps in when your DNS hides Steam's servers or points them at 127.0.0.1. It applies only to Steam inside kegPlay and never touches your Mac's network settings.
 - **No input-method trouble.** Switches the keyboard to ABC while a game window is active and restores your input method when you leave.
 - **Update notice.** The app tells you when a newer release is available.
 - **Old DirectDraw games.** Supported titles from around 2000 that would fail with “Unable to set the video mode” are fixed automatically: kegPlay installs [cnc-ddraw](https://github.com/FunkyFr3sh/cnc-ddraw) into the game folder when you open Steam or press Play.
+- **Notices crashes.** When a game closes unexpectedly, kegPlay reads the log, explains known problems and offers a pre-filled GitHub report (with personal paths removed) for new ones. Nothing is sent without you.
 - **Checks games before you play.** kegPlay reads each installed game's executables and warns on the game card when a game needs DirectX 12, is a DirectX 9 or old DirectDraw game, or ships anti-cheat. Click the warning to open the matching troubleshooting entry.
 - **Automatic per-game fixes.** Games that ship Microsoft's shader compiler are set to use it, as on Windows, so shaders built while you play no longer crash them.
 - **No Steam overlay surprises.** The overlay that Steam injects into games breaks several of them under Wine, so kegPlay keeps it out.
