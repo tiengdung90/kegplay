@@ -5,6 +5,7 @@ source "$(dirname "$0")/env.sh"
 need_wine
 overlay_off
 apply_game_fixes
+shader_cache_tidy || true
 [ -f "$STEAM_EXE_UNIX" ] || die "Chưa cài Steam. Chạy ./scripts/install-steam.sh trước."
 
 # Bottle đang dùng PAC riêng của kegPlay → bật máy chủ PAC trước khi Steam chạy

@@ -188,6 +188,29 @@ apply_game_fixes() {
   done
 }
 
+# Bộ đệm shader DXMT nằm ở thư mục đệm của macOS (<DARWIN_USER_CACHE_DIR>/dxmt/<tên exe>/) — CỐ Ý để nguyên ở đó:
+# macOS tự dọn khi ổ đầy, người dùng không bị kẹt. kegPlay chỉ dọn bộ đệm của game ĐÃ GỠ để khỏi để rác:
+# ghi lại tên mọi .exe trong steamapps/common (file .kegplay_game_exes trong bottle); lần sau, tên nào trong danh sách
+# cũ mà không còn file → xoá thư mục đệm cùng tên. Thư mục đệm không có trong danh sách (Steam, app khác như
+# CrossOver/Whisky dùng chung chỗ này) KHÔNG bao giờ bị đụng. Gọi khi mở và khi tắt Steam.
+shader_cache_tidy() {
+  local cache="${KEGPLAY_SHADER_CACHE:-$(getconf DARWIN_USER_CACHE_DIR 2>/dev/null)dxmt}"
+  local common="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steamapps/common" list="$WINEPREFIX/.kegplay_game_exes"
+  local now d name
+  [ -d "$common" ] || return 0
+  now="$(find "$common" -maxdepth 6 -type f -iname '*.exe' 2>/dev/null | sed 's#.*/##' | sort -fu)"
+  if [ -f "$list" ] && [ -d "$cache" ]; then
+    for d in "$cache"/*/; do
+      name="$(basename "$d")"
+      case "$name" in ''|*/*|.|..) continue;; esac
+      grep -qixF -- "$name" "$list" || continue                    # không phải exe của game kegPlay → bỏ qua
+      printf '%s\n' "$now" | grep -qixF -- "$name" && continue      # game vẫn còn
+      rm -rf -- "${cache:?}/$name" && echo "==> Đã dọn bộ đệm shader của game đã gỡ: $name"
+    done
+  fi
+  printf '%s\n' "$now" > "$list"
+}
+
 need_wine() { [ -x "$WINE_BASE/bin/wine" ] || die "Chưa có Wine. Chạy ./scripts/setup.sh trước."; }
 
 # Wine của BOTTLE NÀY có đang chạy không (không xét bottle/bản kegPlay khác trên máy).
