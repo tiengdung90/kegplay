@@ -44,6 +44,8 @@ export PATH="$WINE_BIN:$PATH"
 # Runtime DXVK/WineD3D (Wine gốc) bỏ qua biến. Tắt khi gỡ lỗi: WINEMSYNC=0 (phải tắt hẳn Steam trước, vì wineserver
 # và mọi tiến trình phải cùng bật hoặc cùng tắt).
 export WINEMSYNC="${WINEMSYNC:-1}"
+# Công tắc gỡ lỗi: có file <dữ liệu>/.kegplay_nomsync → tắt msync (so A/B khi nghi msync gây lỗi). Phải tắt hẳn Steam rồi mở lại.
+[ -f "$KEGPLAY_DATA/.kegplay_nomsync" ] && export WINEMSYNC=0
 # Giảm log rác; debug thì chạy: WINEDEBUG=+err ./scripts/run.sh ...
 # err+module: chỉ in lỗi nạp DLL ("… not found") — ít dòng, để bác sĩ (doctor.pl --log) nhận ra game thiếu DLL
 export WINEDEBUG="${WINEDEBUG:--all,err+module}"

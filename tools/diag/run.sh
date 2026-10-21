@@ -25,6 +25,8 @@ build() { # <tên>
 cmd="${1:?Dùng: $0 enumwin|winprobe|trace …}"; shift
 case "$cmd" in
   enumwin)  build enumwin;  wine 'C:\enumwin.exe' "$@" 2>/dev/null | tr -d '\r' ;;
+  mouseprobe) build mouseprobe; WINEMSYNC="${PROBE_MSYNC:-$WINEMSYNC}" wine 'C:\mouseprobe.exe' "${1:-40}" >/dev/null 2>&1
+            tr -d '\r' < "$WINEPREFIX/drive_c/mouseprobe.txt"; mv -f "$WINEPREFIX/drive_c/mouseprobe.txt" "$OUT/" ;;
   winprobe) build winprobe; wine 'C:\winprobe.exe' "$@" >/dev/null 2>&1
             tr -d '\r' < "$WINEPREFIX/drive_c/winprobe.txt" ;;
   trace)    dir="${1:?thư mục game}"; exe="${2:?exe}"; ch="${3:?kênh, vd +ddraw,+wgl}"; secs="${4:-30}"
