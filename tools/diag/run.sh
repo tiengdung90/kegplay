@@ -3,6 +3,9 @@
 #   tools/diag/run.sh enumwin ["chuỗi trong tiêu đề"]          liệt kê cửa sổ + cửa sổ con của game ngay lúc này
 #   tools/diag/run.sh winprobe "<tiêu đề>" "<chữ nút>" [giây]   ghi số liệu mỗi giây trong lúc người dùng thao tác
 #   tools/diag/run.sh trace <thư mục game> <exe> <kênh> [giây]   chạy exe với WINEDEBUG=<kênh>, in đường dẫn file log
+#   tools/diag/run.sh guithreads                           luồng nào treo (hung), giữ chuột (capture), active/focus
+#   tools/diag/run.sh llmouse [giây]                         đếm sự kiện chuột Wine nhận được (hook cấp thấp)
+#   tools/diag/run.sh opendlg [old|mta]                      mở hộp chọn file (IFileOpenDialog / kiểu cũ / luồng MTA)
 #   swift tools/diag/macwindows.swift                           cửa sổ Wine + chế độ màn hình phía macOS
 # Dữ liệu: đặt KEGPLAY_DATA trỏ tới thư mục dữ liệu của app (mặc định ~/Library/Application Support/Kegplay).
 # LƯU Ý: game toàn màn hình bị thu nhỏ khi người dùng chuyển cửa sổ → số đo lúc đó vô nghĩa; dùng winprobe.
@@ -16,15 +19,19 @@ build() { # <tên>
   local exe="$OUT/$1.exe"
   if [ ! -f "$exe" ] || [ "$HERE/$1.c" -nt "$exe" ]; then
     command -v x86_64-w64-mingw32-gcc >/dev/null || die "Thiếu mingw-w64: brew install mingw-w64"
-    x86_64-w64-mingw32-gcc -O1 -o "$exe" "$HERE/$1.c" -luser32
+    x86_64-w64-mingw32-gcc -O1 -o "$exe" "$HERE/$1.c" -luser32 -lcomdlg32 -lole32 -luuid
   fi
   cp "$exe" "$WINEPREFIX/drive_c/$1.exe"
   # dọn file đã chép vào bottle khi xong (kết quả winprobe được chuyển sang $OUT để đọc lại)
   trap 'rm -f "$WINEPREFIX/drive_c/'"$1"'.exe"; [ -f "$WINEPREFIX/drive_c/winprobe.txt" ] && mv -f "$WINEPREFIX/drive_c/winprobe.txt" "$OUT/winprobe.txt"' EXIT
 }
-cmd="${1:?Dùng: $0 enumwin|winprobe|trace …}"; shift
+cmd="${1:?Dùng: $0 enumwin|guithreads|llmouse|opendlg|mouseprobe|winprobe|trace …}"; shift
 case "$cmd" in
   enumwin)  build enumwin;  wine 'C:\enumwin.exe' "$@" 2>/dev/null | tr -d '\r' ;;
+  guithreads) build guithreads; wine 'C:\guithreads.exe' 2>/dev/null | tr -d '\r' ;;
+  opendlg)  build opendlg; wine 'C:\opendlg.exe' "$@" 2>/dev/null | tr -d '\r' ;;
+  llmouse) build llmouse; wine 'C:\llmouse.exe' "${1:-25}" >/dev/null 2>&1
+            tr -d '\r' < "$WINEPREFIX/drive_c/llmouse.txt"; rm -f "$WINEPREFIX/drive_c/llmouse.txt" ;;
   mouseprobe) build mouseprobe; WINEMSYNC="${PROBE_MSYNC:-$WINEMSYNC}" wine 'C:\mouseprobe.exe' "${1:-40}" >/dev/null 2>&1
             tr -d '\r' < "$WINEPREFIX/drive_c/mouseprobe.txt"; mv -f "$WINEPREFIX/drive_c/mouseprobe.txt" "$OUT/" ;;
   winprobe) build winprobe; wine 'C:\winprobe.exe' "$@" >/dev/null 2>&1
