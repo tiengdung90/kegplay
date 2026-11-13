@@ -33,7 +33,7 @@ It is a thin, readable layer of shell scripts with a SwiftUI front end. Nothing 
 - **Old DirectDraw games.** Supported titles from around 2000 that would fail with “Unable to set the video mode” are fixed automatically: kegPlay installs [cnc-ddraw](https://github.com/FunkyFr3sh/cnc-ddraw) into the game folder when you open Steam or press Play.
 - **Notices crashes.** When a game closes unexpectedly, kegPlay reads the log, explains known problems and offers a pre-filled GitHub report (with personal paths removed) for new ones. Nothing is sent without you.
 - **Checks games before you play.** kegPlay reads each installed game's executables and warns on the game card when a game needs DirectX 12, is a DirectX 9 or old DirectDraw game, or ships anti-cheat. Click the warning to open the matching troubleshooting entry.
-- **Automatic per-game fixes.** Games that ship Microsoft's shader compiler are set to use it, as on Windows, so shaders built while you play no longer crash them.
+- **Automatic per-game fixes.** Games that ship Microsoft's shader compiler (any `d3dcompiler_NN.dll`, e.g. `_47` in Bannerlord, `_43` in Kenshi) are set to use it, as on Windows, so shaders built while you play no longer crash them.
 - **No Steam overlay surprises.** The overlay that Steam injects into games breaks several of them under Wine, so kegPlay keeps it out.
 - **13 languages.** English, Vietnamese, Simplified Chinese, Japanese, Korean, Spanish, Portuguese (Brazil), German, French, Russian, Turkish, Indonesian and Thai.
 

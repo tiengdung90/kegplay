@@ -171,24 +171,30 @@ overlay_off() {
 # Game đã biết là cần sửa DirectDraw (AppID Steam). Thêm game mới vào đây SAU KHI đã thử chạy được.
 #   2229850 = Command & Conquer: Red Alert 2 and Yuri's Revenge
 KEGPLAY_DDRAW_APPIDS="2229850"
-# Trình biên dịch shader: game nào MANG THEO d3dcompiler_47.dll (bản Microsoft) cạnh file chạy thì cho các file chạy
-# trong thư mục đó dùng bản của game (DllOverrides native,builtin) — giống hệt trên Windows. Không có thì Wine dùng bản
-# của nó (vkd3d-shader), và game tự biên dịch shader còn thiếu lúc chơi sẽ hỏng ở #include tương đối
-# ("E4002: Failed to open …") → hộp lỗi rồi văng (gặp ở Bannerlord, 2026-10-20). Game không mang theo file này: không đụng.
-# Dấu <bottle>/.kegplay_d3dc_<appid> ghi danh sách exe đã đặt; game cập nhật thêm exe/thư mục thì tự đặt lại.
+# Trình biên dịch shader: game nào MANG THEO d3dcompiler_NN.dll (bản Microsoft: _47, _43…) cạnh file chạy thì cho các
+# file chạy trong thư mục đó dùng bản của game (DllOverrides native,builtin) — giống hệt trên Windows. Không có thì Wine
+# dùng bản của nó (vkd3d-shader), khắt khe/khác bản Microsoft ở vài chỗ:
+#   - #include tương đối hỏng ("E4002: Failed to open …") → hộp lỗi rồi văng (Bannerlord, d3dcompiler_47, 2026-10-20)
+#   - từ chối Texture2D gắn register không phải t ("E5016: … must be bound to register type 't'") → mất shader,
+#     Ogre báo "Null program bound" rồi văng khi vào game (Kenshi, D3DCompiler_43, 2026-11-13)
+# Game không mang theo file này: không đụng.
+# Dấu <bottle>/.kegplay_d3dc_<appid> ghi danh sách exe+dll đã đặt; game cập nhật thêm exe/thư mục thì tự đặt lại.
 d3dc_fix_game() { # <appid> <thư mục game>
-  local id="$1" dir="$2" mark="$WINEPREFIX/.kegplay_d3dc_$1" exes reg exe
-  exes="$(find "$dir" -maxdepth 6 -type f -iname 'd3dcompiler_47.dll' 2>/dev/null | while IFS= read -r f; do
-            find "$(dirname "$f")" -maxdepth 1 -type f -iname '*.exe' | sed 's#.*/##'; done | sort -fu)"
-  [ -n "$exes" ] || return 0
-  [ "$(cat "$mark" 2>/dev/null)" = "$exes" ] && return 0
+  local id="$1" dir="$2" mark="$WINEPREFIX/.kegplay_d3dc_$1" pairs reg exe dll
+  # Mỗi dòng: "<tên exe>\t<tên dll không đuôi, chữ thường>"
+  pairs="$(find "$dir" -maxdepth 6 -type f -iname 'd3dcompiler_[0-9]*.dll' 2>/dev/null | while IFS= read -r f; do
+            dll="$(basename "$f" | tr 'A-Z' 'a-z')"; dll="${dll%.dll}"
+            find "$(dirname "$f")" -maxdepth 1 -type f -iname '*.exe' | awk -v d="$dll" '{sub(/.*\//, ""); print $0 "\t" d}'
+          done | sort -fu)"
+  [ -n "$pairs" ] || return 0
+  [ "$(cat "$mark" 2>/dev/null)" = "$pairs" ] && return 0
   reg="$(mktemp -t kegplay-d3dc).reg"
   { echo 'REGEDIT4'; echo
-    while IFS= read -r exe; do
-      printf '[HKEY_CURRENT_USER\\Software\\Wine\\AppDefaults\\%s\\DllOverrides]\n"d3dcompiler_47"="native,builtin"\n\n' "$exe"
-    done <<< "$exes"; } > "$reg"
+    while IFS=$'\t' read -r exe dll; do
+      printf '[HKEY_CURRENT_USER\\Software\\Wine\\AppDefaults\\%s\\DllOverrides]\n"%s"="native,builtin"\n\n' "$exe" "$dll"
+    done <<< "$pairs"; } > "$reg"
   if wine reg import "$(winepath -w "$reg" 2>/dev/null || echo "$reg")" >/dev/null 2>&1; then
-    printf '%s\n' "$exes" > "$mark"
+    printf '%s\n' "$pairs" > "$mark"
   else
     echo "    (chưa sửa được trình biên dịch shader cho game $id — bỏ qua)"
   fi

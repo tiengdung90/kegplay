@@ -121,7 +121,8 @@ for my $mf (sort grep { /^appmanifest_\d+\.acf$/ } readdir $dh) {
         $arch{$a} = 1;
         while (my ($k, $w) = each %$dll) { $all{$k} = $w if !$all{$k} || $w == 1 }
         (my $exedir = $exe) =~ s{/[^/]+$}{};
-        $d3dc = 1 if -f "$exedir/d3dcompiler_47.dll";
+        if (!$d3dc && opendir(my $dh, $exedir)) {         # d3dcompiler_47 (Bannerlord), D3DCompiler_43 (Kenshi)…
+            ($d3dc) = grep { /^d3dcompiler_\d+\.dll$/i } readdir $dh; closedir $dh }
     }
     find({ no_chdir => 1, wanted => sub {
         $anticheat ||= $1 if m{/(EasyAntiCheat|BattlEye|BEService[^/]*|EAAntiCheat[^/]*|vgc\.exe|xigncode[^/]*|nProtect[^/]*)$}i;
@@ -137,7 +138,7 @@ for my $mf (sort grep { /^appmanifest_\d+\.acf$/ } readdir $dh) {
     }
     if ($imp->('d3d9.dll') && !$imp->('d3d11.dll')) { out($id, $name, 'warn', 'dx9', 'DirectX 9 game: runs through WineD3D, may be slow'); $found++ }
     if ($anticheat) { out($id, $name, 'warn', 'anticheat', "anti-cheat found ($anticheat): online modes are unlikely to work"); $found++ }
-    if ($d3dc && !$d3dc_fixed{$id}) { out($id, $name, 'info', 'shader-compile-e4002', 'ships its own d3dcompiler_47.dll; if it crashes with E4002, this is the fix to try'); $found++ }
+    if ($d3dc && !$d3dc_fixed{$id}) { out($id, $name, 'info', 'shader-compile-e4002', "ships its own $d3dc; if it crashes on shader errors (E4002, E5016), this is the fix to try"); $found++ }
     if ($d3dc && $d3dc_fixed{$id})  { out($id, $name, 'ok', 'shader-compile-e4002', 'uses the shader compiler that ships with the game'); $found++ }
     if ($imp->('d3d11.dll') || $imp->('dxgi.dll')) { out($id, $name, 'ok', 'dx11', 'DirectX 10/11: runs with DXMT') }
     elsif (!$found) { out($id, $name, 'info', 'unknown-api', 'graphics API not detected from the executable') }
