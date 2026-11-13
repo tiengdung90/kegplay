@@ -7,3 +7,4 @@ echo "==> Tắt mọi tiến trình trong bottle '$BOTTLE'"
 wineserver -k || true
 shader_cache_tidy || true
 unblock_stop
+cefwatch_stop   # thôi canh wrapper CEF

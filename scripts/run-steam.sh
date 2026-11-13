@@ -65,3 +65,10 @@ echo "==> Mở Steam (bottle '$BOTTLE'), log: $log"
 # shellcheck disable=SC2086
 "${WINE_NOHUP[@]}" wine "$STEAM_EXE_UNIX" "${STEAM_FLAGS[@]}" ${STEAM_ARGS:-} >"$log" 2>&1 &
 echo "    PID wine: $!"
+
+# Steam tự cập nhật lúc đang chạy sẽ ghi đè wrapper ở trên → cửa sổ đen. Canh nền và tự sửa (scripts/cefwatch.sh).
+if [ "${KEGPLAY_CEFWRAP:-1}" = "1" ] && [ "${KEGPLAY_CEFWATCH:-1}" = "1" ]; then
+  cefwatch_stop
+  KEGPLAY_DATA="$KEGPLAY_DATA" BOTTLE="$BOTTLE" nohup "$KEGPLAY_ROOT/scripts/cefwatch.sh" \
+    </dev/null >>"$LOG_DIR/cefwatch.log" 2>&1 &
+fi

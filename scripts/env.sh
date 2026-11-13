@@ -120,6 +120,12 @@ kill_own() {
     kill "$pid" 2>/dev/null || true
   done
 }
+# Tắt bản canh wrapper CEF đang chạy (scripts/cefwatch.sh) — chỉ khi pid trong file đúng là nó
+cefwatch_stop() {
+  local pid; pid="$(cat "$KEGPLAY_DATA/runtime/cefwatch.pid" 2>/dev/null || true)"
+  [ -n "$pid" ] && [ "$pid" != "$$" ] && ps -p "$pid" -o command= 2>/dev/null | grep -q cefwatch && kill "$pid" 2>/dev/null
+  return 0
+}
 dpi_stop() { kill_own "$KEGPLAY_DPI_BIN --no-tui"; }
 
 # PAC: mẫu scripts/pac/kegplay.pac → runtime/pac/kegplay.pac (điền cổng SpoofDPI), phục vụ qua HTTP cho Wine
