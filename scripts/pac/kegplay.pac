@@ -12,11 +12,17 @@
 // steamcommunity.com (cộng đồng, hồ sơ, Workshop) + steam-chat.com: 2026-10-20 có mạng chặn cả hai theo SNI giống Store
 // (đo bằng curl --resolve tới IP thật: hết giờ; qua SpoofDPI: 200). Ảnh/CDN (*.steamstatic.com, akamaihd, akamaized)
 // KHÔNG bị chặn theo SNI — chỉ bị DNS hố đen, việc đó do dnsfallback lo → vẫn để DIRECT.
+// 2026-11-14: nhà mạng chặn THÊM *.steamstatic.com, *.steamusercontent.com, steamuserimages-*.akamaihd.net theo SNI
+// (curl --resolve tới IP thật: reset ngay; qua SpoofDPI: 403/404 = tới được) → Store trắng, Workshop mất ảnh. Proxy
+// các tên đó, TRỪ client-update.* (lý do ở trên). Tải game/mod (steampipe, akamaized) vẫn DIRECT.
 function FindProxyForURL(url, host) {
   if (host == "steampowered.com" || shExpMatch(host, "*.steampowered.com") ||
       shExpMatch(host, "*.steamserver.net") ||
       host == "steamcommunity.com" || shExpMatch(host, "*.steamcommunity.com") ||
-      host == "steam-chat.com" || shExpMatch(host, "*.steam-chat.com"))
+      host == "steam-chat.com" || shExpMatch(host, "*.steam-chat.com") ||
+      // ảnh/CSS/JS của Store, Cộng đồng, Workshop (trừ client-update: đi qua SpoofDPI bị CDN treo)
+      (shExpMatch(host, "*.steamstatic.com") && !shExpMatch(host, "client-update.*")) ||
+      shExpMatch(host, "*.steamusercontent.com") || shExpMatch(host, "steamuserimages-*.akamaihd.net"))
     return "PROXY 127.0.0.1:__DPI_PORT__; DIRECT";
   return "DIRECT";
 }
