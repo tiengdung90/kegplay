@@ -118,7 +118,7 @@ Rebuilding the patched Wine driver is optional and needs Homebrew's `mingw-w64`,
 | `prebuilt/` | The prebuilt helpers |
 | `tools/` | Build, localization and release scripts |
 
-Code comments and script messages are written in Vietnamese. The app itself is localized.
+The app interface is localized. Setup, runtime logs and command-line diagnostics use English.
 
 ## Troubleshooting
 

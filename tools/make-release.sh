@@ -11,14 +11,14 @@ STAGE="$(mktemp -d)/Kegplay"
 mkdir -p "$STAGE" "$OUT"
 
 # 2 file dựng sẵn phải có và khớp mã nguồn
-[ -f prebuilt/cefwrap.exe ] || { echo "LỖI: thiếu prebuilt/cefwrap.exe"; exit 1; }
-[ src/cefwrap/cefwrap.c -nt prebuilt/cefwrap.exe ] && { echo "LỖI: cefwrap.c mới hơn bản dựng sẵn — build lại prebuilt/cefwrap.exe"; exit 1; }
-[ -f prebuilt/dnsfallback.dylib ] || { echo "LỖI: thiếu prebuilt/dnsfallback.dylib — chạy tools/build-dnsfallback.sh"; exit 1; }
-[ src/dnsfallback/dnsfallback.c -nt prebuilt/dnsfallback.dylib ] && { echo "LỖI: dnsfallback.c mới hơn bản dựng sẵn — chạy tools/build-dnsfallback.sh"; exit 1; }
-[ -f engines/dxmt/lib/winemac.so ] && [ -f engines/dxmt/lib/winemac.so.wine ] || { echo "LỖI: thiếu engines/dxmt/lib/winemac.so(.wine) — chạy engines/dxmt/build-winemac.sh"; exit 1; }
-nm -gU engines/dxmt/lib/winemac.so | grep -q " _macdrv_functions$" || { echo "LỖI: winemac.so không xuất macdrv_functions"; exit 1; }
-for f in engines/msync/port-msync.py engines/msync/src/*/*; do [ "$f" -nt engines/msync/lib/ntdll.so ] && { echo "LỖI: $f mới hơn bản msync đã dựng — chạy engines/msync/build-msync.sh"; exit 1; }; done
-for f in engines/dxmt/bridge/*; do [ "$f" -nt engines/dxmt/lib/winemac.so ] && { echo "LỖI: $f mới hơn winemac.so — build lại"; exit 1; }; done
+[ -f prebuilt/cefwrap.exe ] || { echo "ERROR: Missing prebuilt/cefwrap.exe"; exit 1; }
+[ src/cefwrap/cefwrap.c -nt prebuilt/cefwrap.exe ] && { echo "ERROR: cefwrap.c is newer than the prebuilt executable. Rebuild prebuilt/cefwrap.exe."; exit 1; }
+[ -f prebuilt/dnsfallback.dylib ] || { echo "ERROR: Missing prebuilt/dnsfallback.dylib. Run tools/build-dnsfallback.sh."; exit 1; }
+[ src/dnsfallback/dnsfallback.c -nt prebuilt/dnsfallback.dylib ] && { echo "ERROR: dnsfallback.c is newer than the prebuilt library. Run tools/build-dnsfallback.sh."; exit 1; }
+[ -f engines/dxmt/lib/winemac.so ] && [ -f engines/dxmt/lib/winemac.so.wine ] || { echo "ERROR: Missing winemac.so or its .wine file in engines/dxmt/lib. Run engines/dxmt/build-winemac.sh."; exit 1; }
+nm -gU engines/dxmt/lib/winemac.so | grep -q " _macdrv_functions$" || { echo "ERROR: winemac.so does not export macdrv_functions"; exit 1; }
+for f in engines/msync/port-msync.py engines/msync/src/*/*; do [ "$f" -nt engines/msync/lib/ntdll.so ] && { echo "ERROR: $f is newer than the msync build. Run engines/msync/build-msync.sh."; exit 1; }; done
+for f in engines/dxmt/bridge/*; do [ "$f" -nt engines/dxmt/lib/winemac.so ] && { echo "ERROR: $f is newer than winemac.so. Rebuild the driver."; exit 1; }; done
 
 cp LICENSE THIRD-PARTY-NOTICES.txt VERSION install.sh "$STAGE/"
 # tài liệu .md nằm trong docs/ và không lên GitHub → bản clone từ GitHub không có; có thì kèm vào gói
@@ -45,16 +45,16 @@ chmod +x "$STAGE"/install.sh "$STAGE"/*.command "$STAGE"/scripts/*.sh "$STAGE"/s
 
 # --- tự kiểm trước khi nén ---
 fail=0
-for bad in bottles runtime cache logs dist archive; do [ -e "$STAGE/$bad" ] && { echo "LỖI: gói chứa $bad/"; fail=1; }; done
+for bad in bottles runtime cache logs dist archive; do [ -e "$STAGE/$bad" ] && { echo "ERROR: Package contains $bad/"; fail=1; }; done
 # thông tin riêng của máy/tài khoản người đóng gói
 me="$(id -un)"
 if grep -rIl -e "/Users/$me" -e "$me" "$STAGE" >/dev/null 2>&1; then
-  echo "LỖI: file sau chứa tên/đường dẫn người dùng '$me':"; grep -rIl -e "/Users/$me" -e "$me" "$STAGE" | sed "s|$STAGE/|   |"; fail=1
+  echo "ERROR: The following files contain the username or home path for '$me':"; grep -rIl -e "/Users/$me" -e "$me" "$STAGE" | sed "s|$STAGE/|   |"; fail=1
 fi
-[ $fail = 0 ] || { echo "==> DỪNG, không tạo gói."; exit 1; }
+[ $fail = 0 ] || { echo "==> Packaging stopped."; exit 1; }
 
 ZIP="$OUT/Kegplay-$VER.zip"
 rm -f "$ZIP"
 ( cd "$(dirname "$STAGE")" && zip -q -r -X "$ZIP" Kegplay )
 rm -rf "$(dirname "$STAGE")"
-echo "==> $ZIP  ($(du -h "$ZIP" | cut -f1), $(unzip -l "$ZIP" | tail -1 | awk '{print $2}') file)"
+echo "==> $ZIP  ($(du -h "$ZIP" | cut -f1), $(unzip -l "$ZIP" | tail -1 | awk '{print $2}') files)"

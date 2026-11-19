@@ -26,4 +26,4 @@ want="1 bad dx12-only
 4 ok dx11
 5 warn anticheat
 5 ok dx11"
-[ "$got" = "$want" ] && echo "==> doctor: mọi ca đúng" || { echo "==> doctor: SAI, mong đợi:"; echo "$want"; exit 1; }
+[ "$got" = "$want" ] && echo "==> doctor: all cases passed" || { echo "==> doctor: unexpected result. Expected:"; echo "$want"; exit 1; }

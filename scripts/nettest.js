@@ -4,7 +4,7 @@ try {
   var http = new ActiveXObject("Microsoft.XMLHTTP");
   http.open("GET", url, false);
   http.send();
-  WScript.Echo(http.status + " " + url + " (" + http.responseText.length + " ky tu)");
+  WScript.Echo(http.status + " " + url + " (" + http.responseText.length + " characters)");
 } catch (e) {
   WScript.Echo("FAIL " + url + " : " + (e.number >>> 0).toString(16) + " " + e.message);
 }

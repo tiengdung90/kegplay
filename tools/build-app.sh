@@ -9,12 +9,12 @@ VER="$(cat VERSION)"
 APP="$ROOT/dist/kegPlay.app"      # tên hiển thị trong Finder/Dock = kegPlay; file chạy bên trong vẫn là Kegplay
 DMG="$ROOT/dist/Kegplay-$VER.dmg"
 
-echo "==> Biên dịch (swift build -c release)"
-( cd app && swift build -c release 2>&1 | grep -E "error|Build complete" ) || { echo "LỖI biên dịch"; exit 1; }
+echo "==> Compiling (swift build -c release)"
+( cd app && swift build -c release 2>&1 | grep -E "error|Build complete" ) || { echo "Build failed"; exit 1; }
 BIN="$ROOT/app/.build/release/Kegplay"
-[ -x "$BIN" ] || { echo "LỖI: không thấy $BIN"; exit 1; }
+[ -x "$BIN" ] || { echo "ERROR: Could not find $BIN"; exit 1; }
 
-echo "==> Gói mã script (dùng make-release.sh để cùng danh sách file + cùng bước tự kiểm)"
+echo "==> Packaging scripts with make-release.sh using the release file list and checks"
 "$ROOT/tools/make-release.sh" >/dev/null
 TMP="$(mktemp -d)"
 unzip -q "$ROOT/dist/Kegplay-$VER.zip" -d "$TMP"
@@ -24,7 +24,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/Kegplay"
 cp "$ROOT/app/Kegplay.icns" "$APP/Contents/Resources/Kegplay.icns"
 # đa ngôn ngữ: sinh lại từ bảng dịch rồi chép các <mã>.lproj vào app
-python3 "$ROOT/tools/make-localizations.py" >/dev/null || { echo "LỖI: bảng dịch thiếu/lệch (chạy tools/make-localizations.py để xem)"; exit 1; }
+python3 "$ROOT/tools/make-localizations.py" >/dev/null || { echo "ERROR: Invalid translation table. Run tools/make-localizations.py for details."; exit 1; }
 cp -R "$ROOT/app/Localization/"*.lproj "$APP/Contents/Resources/"
 LPROJS="$(cd "$ROOT/app/Localization" && for d in *.lproj; do printf "<string>%s</string>" "${d%.lproj}"; done)"
 mv "$TMP/Kegplay" "$APP/Contents/Resources/kegplay"
@@ -53,16 +53,16 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.games</string>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSHumanReadableCopyright</key><string>kegPlay contributors. Wine, DXMT, DXVK, SpoofDPI thuộc tác giả tương ứng.</string>
+  <key>NSHumanReadableCopyright</key><string>kegPlay contributors. Wine, DXMT, DXVK and SpoofDPI are the work of their respective authors.</string>
 </dict>
 </plist>
 PLIST
 
 # ký ad-hoc cả gói (bắt buộc tối thiểu trên Apple Silicon; KHÔNG thay được chữ ký Developer ID + notarize)
 codesign --force --deep --sign - "$APP" 2>/dev/null
-codesign --verify --deep "$APP" && echo "==> $APP (ký ad-hoc ✓, $(du -sh "$APP" | cut -f1))"
+codesign --verify --deep "$APP" && echo "==> $APP (ad-hoc signed ✓, $(du -sh "$APP" | cut -f1))"
 
-echo "==> Tạo DMG"
+echo "==> Creating DMG"
 STAGE="$(mktemp -d)"
 cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"

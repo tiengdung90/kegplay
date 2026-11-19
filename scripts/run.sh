@@ -6,12 +6,12 @@
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 need_wine
-[ $# -ge 1 ] || die "Cần tham số: đường dẫn .exe"
+[ $# -ge 1 ] || die "Expected an argument: path to an .exe file"
 
 exe="$1"; shift
 # Chạy từ thư mục của game — nhiều game tìm file dữ liệu theo thư mục hiện tại
 if [ -f "$exe" ]; then cd "$(dirname "$exe")"; fi
 
 log="$LOG_DIR/run-$(date +%Y%m%d-%H%M%S).log"
-echo "==> Chạy $exe (bottle '$BOTTLE'), log: $log"
+echo "==> Running $exe in bottle '$BOTTLE'. Log: $log"
 wine "$exe" "$@" >"$log" 2>&1

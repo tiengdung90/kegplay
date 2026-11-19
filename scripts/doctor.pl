@@ -42,7 +42,7 @@ if (@ARGV >= 1 && $ARGV[0] eq '--log') {
     exit 0;
 }
 
-my $apps = shift or die "Dùng: $0 <steamapps> [--net] | --log <file> [offset]\n";
+my $apps = shift or die "Usage: $0 <steamapps> [--net] | --log <file> [offset]\n";
 my $net = grep { $_ eq '--net' } @ARGV;
 my %ddraw_fixed = map { $_ => 1 } split ' ', ($ENV{KEGPLAY_DDRAW_APPIDS} // '');
 my %d3dc_fixed  = map { (split /:/)[0] => 1 } split ' ', ($ENV{KEGPLAY_D3DC_FIXES} // '');

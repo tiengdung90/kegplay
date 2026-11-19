@@ -30,21 +30,21 @@ helper_is_real() { [ -f "$HELPER" ] && [ "$(stat -f%z "$HELPER")" -gt 1000000 ];
 # Steam ghi xong file chưa: thời điểm đổi (ctime) đã yên ≥ 10 giây
 helper_settled() { [ $(( $(date +%s) - $(stat -f%c "$HELPER") )) -ge 10 ]; }
 
-say "Bắt đầu canh wrapper CEF (pid $$)"
+say "Monitoring the CEF wrapper (PID $$)"
 sleep 10                                          # chờ Steam kịp khởi động
 while bottle_running; do
   if helper_is_real && helper_settled; then
-    say "Steam đã ghi đè wrapper (vừa cập nhật) → cài lại"
-    "$KEGPLAY_ROOT/scripts/cefwrap.sh" || say "cefwrap.sh lỗi"
+    say "A Steam update replaced the wrapper. Reinstalling it."
+    "$KEGPLAY_ROOT/scripts/cefwrap.sh" || say "cefwrap.sh failed"
   fi
   if unwrapped_cef && ! helper_is_real; then
     last="$(cat "$STAMP" 2>/dev/null || echo 0)"
     if [ $(( $(date +%s) - last )) -lt 300 ]; then
-      say "Giao diện Steam vẫn chạy không qua wrapper sau lần mở lại trước — không mở lại nữa"
+      say "Steam is still running without the wrapper after the last restart. Skipping another restart."
       exit 1
     fi
     date +%s > "$STAMP"
-    say "Giao diện Steam đang chạy không qua wrapper (sẽ đen) → tắt Steam và mở lại"
+    say "Steam is running without the wrapper and may show a black window. Restarting Steam."
     sleep 5                                       # để Steam ghi nốt cấu hình/đăng nhập sau khi cập nhật
     wineserver -k 2>/dev/null || true
     wait_wine_idle
@@ -53,4 +53,4 @@ while bottle_running; do
   fi
   sleep 3
 done
-say "Steam đã tắt — thôi canh"
+say "Steam has exited. Stopping the wrapper monitor."

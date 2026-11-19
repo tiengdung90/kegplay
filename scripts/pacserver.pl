@@ -3,9 +3,9 @@
 # Dùng Perl vì có sẵn trong mọi macOS (python3 trên máy trống đòi cài Command Line Tools).
 #   pacserver.pl <cổng> <file.pac>
 use strict; use warnings; use IO::Socket::INET;
-my ($port, $file) = @ARGV; die "Dùng: $0 <cổng> <file.pac>\n" unless $port && $file && -f $file;
+my ($port, $file) = @ARGV; die "Usage: $0 <port> <file.pac>\n" unless $port && $file && -f $file;
 my $srv = IO::Socket::INET->new(LocalAddr => '127.0.0.1', LocalPort => $port, Listen => 16, ReuseAddr => 1)
-  or die "Không mở được cổng $port: $!\n";
+  or die "Could not open port $port: $!\n";
 $SIG{PIPE} = 'IGNORE';
 while (my $c = $srv->accept) {
   my $req = <$c>; $req = '' unless defined $req;

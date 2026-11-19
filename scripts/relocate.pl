@@ -6,7 +6,7 @@
 use strict; use warnings; use utf8; use File::Copy qw(copy); use Encode qw(decode encode);
 binmode(STDOUT, ':utf8');
 my ($bottle, $old_root, $new_root) = map { decode('UTF-8', $_) } @ARGV;
-die "Dùng: $0 <bottle> <gốc_cũ> <gốc_mới>\n" unless defined $new_root;
+die "Usage: $0 <bottle> <old_root> <new_root>\n" unless defined $new_root;
 
 # Đổi đường dẫn Unix thành chuỗi Z:\... đúng cách Wine ghi trong file .reg:
 # "\" → "\\", ký tự ngoài ASCII → \x<hex> (đệm 4 chữ số nếu ký tự sau là chữ số hex).
@@ -34,8 +34,8 @@ for my $name (qw(user.reg system.reg userdef.reg)) {
   next unless $n;
   copy($f, "$f.bak-relocate");
   $text =~ s/\Q$old\E/$new/g;
-  open my $outfh, '>:raw', $f or die "Không ghi được $f: $!\n"; print $outfh encode('UTF-8', $text); close $outfh;
+  open my $outfh, '>:raw', $f or die "Could not write $f: $!\n"; print $outfh encode('UTF-8', $text); close $outfh;
   $total += $n;
 }
 (my $bn = $bottle) =~ s{.*/}{};
-print "==> Bottle '$bn': đã sửa $total đường dẫn cũ ($old_root → $new_root)\n";
+print "==> Bottle '$bn': updated $total paths ($old_root → $new_root)\n";

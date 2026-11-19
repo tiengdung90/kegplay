@@ -32,20 +32,20 @@ make_reg() {  # $1 = flags, $2 = pac url ("" khi tắt)   (Perl: có sẵn trong
 case "${1:-status}" in
   on)
     [ "$PAC_URL" = "$KEGPLAY_PAC_URL" ] && unblock_start
-    curl -fs -o /dev/null "$PAC_URL" || echo "CẢNH BÁO: không tải được $PAC_URL"
+    curl -fs -o /dev/null "$PAC_URL" || echo "WARNING: Could not fetch $PAC_URL"
     make_reg 5 "$PAC_URL"
     wine regedit /S "$REGFILE" 2>/dev/null
     if [ "$PAC_URL" = "$KEGPLAY_PAC_URL" ]; then touch "$WINEPREFIX/.kegplay_pac"; else rm -f "$WINEPREFIX/.kegplay_pac"; fi
-    echo "==> Bottle '$BOTTLE' dùng PAC: $PAC_URL  (khởi động lại Steam để nhận)"
+    echo "==> Bottle '$BOTTLE' now uses PAC file $PAC_URL. Restart Steam to apply."
     ;;
   off)
     make_reg 1 ""
     wine regedit /S "$REGFILE" 2>/dev/null
     rm -f "$WINEPREFIX/.kegplay_pac"
-    echo "==> Bottle '$BOTTLE' đi thẳng, không proxy"
+    echo "==> Bottle '$BOTTLE' now connects directly without a proxy"
     ;;
   status)
-    wine reg query "$KEY" /v AutoConfigURL 2>/dev/null | grep -i AutoConfig || echo "Chưa đặt PAC"
+    wine reg query "$KEY" /v AutoConfigURL 2>/dev/null | grep -i AutoConfig || echo "No PAC configured"
     ;;
-  *) die "Dùng: $0 on|off|status" ;;
+  *) die "Usage: $0 on|off|status" ;;
 esac

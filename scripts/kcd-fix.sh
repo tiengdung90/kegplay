@@ -6,9 +6,9 @@ set -euo pipefail
 source "$(dirname "$0")/env.sh"
 
 ATTR="$WINEPREFIX/drive_c/users/$USER/Saved Games/kingdomcome/profiles/default/attributes.xml"
-[ -f "$ATTR" ] || die "Chưa có $ATTR — mở game 1 lần trước."
-if pgrep -f KingdomCome.exe >/dev/null; then die "Game đang chạy — thoát game rồi chạy lại."; fi
+[ -f "$ATTR" ] || die "$ATTR is missing. Launch the game once first."
+if pgrep -f KingdomCome.exe >/dev/null; then die "The game is running. Quit it and try again."; fi
 
 cp "$ATTR" "$ATTR.bak"
 sed -i '' 's|<Attr name="res_fs" value="1" />|<Attr name="res_fs" value="0" />|' "$ATTR"
-grep -q '<Attr name="res_fs" value="0" />' "$ATTR" && echo "==> KCD: đã chuyển sang chế độ cửa sổ (backup: attributes.xml.bak)"
+grep -q '<Attr name="res_fs" value="0" />' "$ATTR" && echo "==> KCD: switched to windowed mode (backup: attributes.xml.bak)"

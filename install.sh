@@ -6,7 +6,7 @@ cd "$(dirname "${BASH_SOURCE[0]:-$0}")"
 
 echo ""
 echo "  ┌──────────────────────────────────────────────┐"
-echo "  │  KEGPLAY $(cat VERSION 2>/dev/null) — chơi game Windows trên Mac  │"
+echo "  │  KEGPLAY $(cat VERSION 2>/dev/null) — play Windows games on Mac  │"
 echo "  └──────────────────────────────────────────────┘"
 echo ""
 
@@ -19,11 +19,11 @@ chmod +x scripts/*.sh scripts/*.pl ./*.command engines/dxmt/build-winemac.sh 2>/
 ./scripts/use-engine.sh dxmt
 
 echo ""
-echo "  🎉 CÀI XONG. Từ giờ, trong thư mục kegPlay:"
-echo "     • Bấm đúp  'Open Steam - DXMT.command'   để mở Steam (đề xuất)"
-echo "     • Bấm đúp  'Open Steam - DXVK.command'   nếu game lỗi với DXMT"
-echo "     • Bấm đúp  'Close Steam.command'         để tắt hẳn Steam + game"
+echo "  🎉 Setup complete. In the kegPlay folder:"
+echo "     • Double-click 'Open Steam - DXMT.command' to open Steam (recommended)."
+echo "     • Double-click 'Open Steam - DXVK.command' if a game has trouble with DXMT."
+echo "     • Double-click 'Close Steam.command' to quit Steam and its games."
 echo ""
-echo "  Lần đầu mở, Steam tự cập nhật vài trăm MB (2–5 phút) rồi hiện màn hình đăng nhập."
-[ -f "$(dirname "$0")/README.md" ] && echo "  Xem thêm: README.md"
+echo "  On first launch, Steam downloads a few hundred MB (2–5 minutes), then shows the sign-in screen."
+[ -f "$(dirname "$0")/README.md" ] && echo "  See also: README.md"
 echo ""

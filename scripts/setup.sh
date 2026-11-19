@@ -5,22 +5,22 @@ source "$(dirname "$0")/env.sh"
 
 # Wine bản osx64 là x86_64 → cần Rosetta 2
 if ! arch -x86_64 /usr/bin/true 2>/dev/null; then
-  die "Chưa có Rosetta 2. Chạy: softwareupdate --install-rosetta --agree-to-license"
+  die "Rosetta 2 is missing. Run: softwareupdate --install-rosetta --agree-to-license"
 fi
 
 if [ ! -x "$WINE_BASE/bin/wine" ]; then
   mkdir -p "$KEGPLAY_DATA/cache" "$WINE_BASE"
   if [ ! -f "$KEGPLAY_DATA/cache/$WINE_TARBALL" ]; then
-    echo "==> Tải $WINE_TARBALL"
+    echo "==> Downloading $WINE_TARBALL"
     curl -fL --progress-bar -o "$KEGPLAY_DATA/cache/$WINE_TARBALL.part" "$WINE_URL"
     mv "$KEGPLAY_DATA/cache/$WINE_TARBALL.part" "$KEGPLAY_DATA/cache/$WINE_TARBALL"
   fi
-  echo "==> Giải nén Wine"
+  echo "==> Extracting Wine"
   tmp="$(mktemp -d)"
   tar -xJf "$KEGPLAY_DATA/cache/$WINE_TARBALL" -C "$tmp"
   # Lấy thư mục wine/ bên trong "Wine Staging.app/Contents/Resources/"
   src="$(find "$tmp" -maxdepth 4 -type d -path '*/Contents/Resources/wine' | head -1)"
-  [ -n "$src" ] || die "Không thấy thư mục wine trong gói"
+  [ -n "$src" ] || die "Could not find the wine directory in the archive"
   cp -R "$src/." "$WINE_BASE/"
   rm -rf "$tmp"
   # Bỏ cờ quarantine để Gatekeeper không chặn từng dylib
@@ -29,7 +29,7 @@ fi
 echo "==> Wine: $("$WINE_BASE/bin/wine" --version)"
 
 if [ ! -f "$WINEPREFIX/system.reg" ]; then
-  echo "==> Tạo bottle '$BOTTLE' tại $WINEPREFIX (lần đầu mất ~1 phút)"
+  echo "==> Creating bottle '$BOTTLE' at $WINEPREFIX (about one minute on first run)"
   mkdir -p "$WINEPREFIX"
   wineboot --init >"$LOG_DIR/setup-$BOTTLE.log" 2>&1
   wineserver -w
@@ -37,8 +37,8 @@ if [ ! -f "$WINEPREFIX/system.reg" ]; then
   wine reg add 'HKCU\Software\Wine' /v Version /d win10 /f >>"$LOG_DIR/setup-$BOTTLE.log" 2>&1
   wineserver -w
 fi
-echo "==> Xong. Bottle: $WINEPREFIX"
-echo "    Tiếp theo: ./scripts/install-steam.sh"
+echo "==> Setup complete. Bottle: $WINEPREFIX"
+echo "    Next: ./scripts/install-steam.sh"
 
 # Vượt chặn Steam Store: bật mặc định (nhà mạng VN chặn store.steampowered.com). kegPlay tự tải SpoofDPI vào
 # runtime/ và chỉ áp cho bottle này — không đổi proxy của máy. Ở nơi không bị chặn: KEGPLAY_UNBLOCK=0 ./scripts/setup.sh
