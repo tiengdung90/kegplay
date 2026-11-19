@@ -18,14 +18,14 @@ OUT="$KEGPLAY_DATA/cache/diag"; mkdir -p "$OUT"
 build() { # <tên>
   local exe="$OUT/$1.exe"
   if [ ! -f "$exe" ] || [ "$HERE/$1.c" -nt "$exe" ]; then
-    command -v x86_64-w64-mingw32-gcc >/dev/null || die "Thiếu mingw-w64: brew install mingw-w64"
+    command -v x86_64-w64-mingw32-gcc >/dev/null || die "mingw-w64 is missing. Run: brew install mingw-w64"
     x86_64-w64-mingw32-gcc -O1 -o "$exe" "$HERE/$1.c" -luser32 -lcomdlg32 -lole32 -luuid
   fi
   cp "$exe" "$WINEPREFIX/drive_c/$1.exe"
   # dọn file đã chép vào bottle khi xong (kết quả winprobe được chuyển sang $OUT để đọc lại)
   trap 'rm -f "$WINEPREFIX/drive_c/'"$1"'.exe"; [ -f "$WINEPREFIX/drive_c/winprobe.txt" ] && mv -f "$WINEPREFIX/drive_c/winprobe.txt" "$OUT/winprobe.txt"' EXIT
 }
-cmd="${1:?Dùng: $0 enumwin|guithreads|llmouse|opendlg|mouseprobe|winprobe|trace …}"; shift
+cmd="${1:?Usage: $0 enumwin|guithreads|llmouse|opendlg|mouseprobe|winprobe|trace …}"; shift
 case "$cmd" in
   enumwin)  build enumwin;  wine 'C:\enumwin.exe' "$@" 2>/dev/null | tr -d '\r' ;;
   guithreads) build guithreads; wine 'C:\guithreads.exe' 2>/dev/null | tr -d '\r' ;;
@@ -36,10 +36,10 @@ case "$cmd" in
             tr -d '\r' < "$WINEPREFIX/drive_c/mouseprobe.txt"; mv -f "$WINEPREFIX/drive_c/mouseprobe.txt" "$OUT/" ;;
   winprobe) build winprobe; wine 'C:\winprobe.exe' "$@" >/dev/null 2>&1
             tr -d '\r' < "$WINEPREFIX/drive_c/winprobe.txt" ;;
-  trace)    dir="${1:?thư mục game}"; exe="${2:?exe}"; ch="${3:?kênh, vd +ddraw,+wgl}"; secs="${4:-30}"
+  trace)    dir="${1:?game directory}"; exe="${2:?exe}"; ch="${3:?channels, e.g. +ddraw,+wgl}"; secs="${4:-30}"
             log="$OUT/trace-$(date +%H%M%S).log"; cd "$dir"
             WINEDEBUG="$ch" wine "$exe" >"$log" 2>&1 & pid=$!
             sleep "$secs"; kill "$pid" 2>/dev/null || true
-            echo "$log ($(wc -l < "$log") dòng)" ;;
-  *) die "Lệnh không rõ: $cmd" ;;
+            echo "$log ($(wc -l < "$log") lines)" ;;
+  *) die "Unknown command: $cmd" ;;
 esac

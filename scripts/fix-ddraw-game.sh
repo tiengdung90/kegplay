@@ -14,18 +14,18 @@
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 need_wine
-appid="${1:?Dùng: $0 <appid> [--undo]}"
-case "$appid" in *[!0-9]*) die "AppID phải là số: $appid";; esac
+appid="${1:?Usage: $0 <appid> [--undo]}"
+case "$appid" in *[!0-9]*) die "AppID must be numeric: $appid";; esac
 
 CNC_VER="v7.1.0.0"
 CNC_SHA="0b13ab89a64c9918189b1dadd449ef6ed3cb3b7b19cabd96d8adbd95505bb908"
 CNC_DIR="$KEGPLAY_DATA/runtime/dist/cnc-ddraw/$CNC_VER"
 APPS="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steamapps"
 manifest="$APPS/appmanifest_$appid.acf"
-[ -f "$manifest" ] || die "Chưa cài game có AppID $appid trong Steam của kegPlay."
+[ -f "$manifest" ] || die "Game $appid is not installed in kegPlay’s Steam library."
 dir="$(sed -n 's/^[[:space:]]*"installdir"[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$manifest" | tr -d '\r' | head -1)"
 GAME="$APPS/common/$dir"
-[ -d "$GAME" ] || die "Không thấy thư mục game: $GAME"
+[ -d "$GAME" ] || die "Game directory not found: $GAME"
 BACKUP="$KEGPLAY_DATA/backups/ddraw-$appid"
 OPTOUT="$WINEPREFIX/.kegplay_noddraw_$appid"      # người dùng đã bấm Hoàn tác → đừng tự cài lại
 # cấu hình: chỉ sửa mục [ddraw] của file mẫu (các mục riêng từng game phía dưới giữ nguyên)
@@ -62,14 +62,14 @@ installed="${installed:-}"
 exes() { ls "$GAME" | grep -i '\.exe$' || true; }
 
 if [ "$mode" = "--undo" ]; then
-  [ -d "$BACKUP" ] || die "Không có bản sao lưu ở $BACKUP"
+  [ -d "$BACKUP" ] || die "No backup found at $BACKUP"
   rm -f "$GAME/ddraw.dll" "$GAME/ddraw.ini"
   cp "$BACKUP"/* "$GAME/" 2>/dev/null || true
   exes | while read -r exe; do
     wine reg delete "HKCU\\Software\\Wine\\AppDefaults\\$exe\\DllOverrides" /v ddraw /f >/dev/null 2>&1 || true
   done
 : > "$OPTOUT"
-  echo "==> Đã trả file gốc cho '$dir'."
+  echo "==> Restored the original files for '$dir'."
   exit 0
 fi
 
@@ -79,10 +79,10 @@ rm -f "$OPTOUT"
 if [ ! -f "$CNC_DIR/ddraw.dll" ]; then
   mkdir -p "$CNC_DIR"
   zip="$CNC_DIR/cnc-ddraw.zip"
-  echo "==> Tải cnc-ddraw $CNC_VER"
+  echo "==> Downloading cnc-ddraw $CNC_VER"
   curl -fL --progress-bar -o "$zip" "https://github.com/FunkyFr3sh/cnc-ddraw/releases/download/$CNC_VER/cnc-ddraw.zip"
   got="$(shasum -a 256 "$zip" | cut -d' ' -f1)"
-  [ "$got" = "$CNC_SHA" ] || { rm -f "$zip"; die "File cnc-ddraw tải về không khớp mã kiểm (SHA-256) — dừng."; }
+  [ "$got" = "$CNC_SHA" ] || { rm -f "$zip"; die "The cnc-ddraw download failed SHA-256 verification. Stopping."; }
   unzip -q -o "$zip" -d "$CNC_DIR"
 fi
 
@@ -134,5 +134,5 @@ if [ "$appid" = "2229850" ]; then
 fi
 
 [ -n "$installed" ] && exit 0
-echo "==> Đã cài cnc-ddraw cho '$dir'. Mở game từ Steam."
-echo "    Trả về như cũ: $0 $appid --undo"
+echo "==> Installed cnc-ddraw for '$dir'. Launch the game from Steam."
+echo "    To undo: $0 $appid --undo"

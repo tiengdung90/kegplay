@@ -3,7 +3,7 @@
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 need_wine
-echo "==> Tắt mọi tiến trình trong bottle '$BOTTLE'"
+echo "==> Stopping all processes in bottle '$BOTTLE'"
 wineserver -k || true
 shader_cache_tidy || true
 unblock_stop

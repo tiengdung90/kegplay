@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     g_btn_text = argc > 2 ? argv[2] : "GUI:SinglePlayer";
     for (i = 0; i < secs; i++, Sleep(1000)) {
         HWND w = FindWindowA(NULL, title), under; RECT r = {0}, b = {0}, d = {0}; POINT p; char ut[48] = "", uc[32] = "";
-        if (!w) { fprintf(f, "%3d không có cửa sổ '%s'\n", i, title); fflush(f); continue; }
+        if (!w) { fprintf(f, "%3d no window titled '%s'\n", i, title); fflush(f); continue; }
         g_btn = g_dlg = 0; EnumChildWindows(w, child, 0);
         GetWindowRect(w, &r); if (g_btn) GetWindowRect(g_btn, &b); if (g_dlg) GetWindowRect(g_dlg, &d);
         GetCursorPos(&p); under = WindowFromPoint(p);

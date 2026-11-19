@@ -25,5 +25,5 @@ if [ "${1:-}" = "--install" ]; then
   rm -rf /Applications/kegPlay.app /Applications/Kegplay.app
   cp -R dist/kegPlay.app /Applications/
   open /Applications/kegPlay.app
-  echo "==> Đã cài /Applications/kegPlay.app (build $N) và mở lại"
+  echo "==> Installed and reopened /Applications/kegPlay.app (build $N)"
 fi

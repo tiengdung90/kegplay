@@ -6,21 +6,21 @@ need_wine
 overlay_off
 apply_game_fixes
 shader_cache_tidy || true
-[ -f "$STEAM_EXE_UNIX" ] || die "Chưa cài Steam. Chạy ./scripts/install-steam.sh trước."
+[ -f "$STEAM_EXE_UNIX" ] || die "Steam is not installed. Run ./scripts/install-steam.sh first."
 
 # Bottle đang dùng PAC riêng của kegPlay → bật máy chủ PAC trước khi Steam chạy
 if [ -f "$WINEPREFIX/.kegplay_pac" ]; then unblock_start; fi
 
 if bottle_running && WINEDEBUG=-all wine tasklist 2>/dev/null | grep -qi '^steam\.exe'; then
-  echo "Steam Windows đang chạy rồi. Treo/đen màn hình thì: ./scripts/stop.sh rồi mở lại."
+  echo "Steam for Windows is already running. If it freezes or shows a black window, run ./scripts/stop.sh and reopen Steam."
   exit 0
 fi
 
 # Mỗi tài khoản chỉ 1 phiên: Steam Mac đăng nhập sẽ đá Steam Windows ra ("Session Replaced"
 # → NO CONNECTION, cài game báo "No internet connection") và Steam Windows không tự nối lại.
 if pgrep -x steam_osx >/dev/null; then
-  echo "CẢNH BÁO: Steam bản Mac đang chạy — sẽ tranh phiên đăng nhập với Steam Windows."
-  echo "          Thoát Steam Mac (Cmd+Q) trước, hoặc tắt 'Run Steam when my computer starts'."
+  echo "WARNING: Steam for Mac is running and may take over the Windows Steam session."
+  echo "          Quit Steam for Mac (Cmd+Q) first, or turn off 'Run Steam when my computer starts'."
 fi
 
 # LẦN ĐẦU sau khi cài: SteamSetup chỉ đặt trình khởi động (Steam.exe); phần lõi (steamui.dll, CEF…) do Steam
@@ -30,7 +30,7 @@ fi
 STEAM_DIR="$(dirname "$STEAM_EXE_UNIX")"
 HELPER_REAL="$STEAM_DIR/bin/cef/cef.win64/steamwebhelper.exe"
 if [ ! -f "$STEAM_DIR/steamui.dll" ] || [ ! -f "$HELPER_REAL" ]; then
-  echo "==> Lần đầu: Steam tải phần lõi (vài trăm MB) — chờ 2–5 phút, đừng tắt cửa sổ 'Updating Steam'."
+  echo "==> Steam is downloading its core files (a few hundred MB). Leave 'Updating Steam' open for 2–5 minutes."
   "${WINE_NOHUP[@]}" wine "$STEAM_EXE_UNIX" -cef-disable-gpu -cef-disable-sandbox >"$LOG_DIR/steam-bootstrap.log" 2>&1 &
   ok=0
   for i in $(seq 1 240); do                                   # tối đa 20 phút
@@ -38,14 +38,14 @@ if [ ! -f "$STEAM_DIR/steamui.dll" ] || [ ! -f "$HELPER_REAL" ]; then
     if [ -f "$STEAM_DIR/steamui.dll" ] && [ -f "$HELPER_REAL" ] \
        && WINEDEBUG=-all wine tasklist 2>/dev/null | grep -qi '^steamwebhelper'; then ok=1; break; fi
     if ! bottle_running; then break; fi                       # Steam tự thoát (lỗi mạng / người dùng bấm Cancel)
-    [ $((i % 3)) = 0 ] && echo "    Đang tải lõi Steam… $(du -sh "$STEAM_DIR" 2>/dev/null | cut -f1)"
+    [ $((i % 3)) = 0 ] && echo "    Downloading Steam core files… $(du -sh "$STEAM_DIR" 2>/dev/null | cut -f1)"
   done
   wineserver -k 2>/dev/null || true
   wait_wine_idle
   if [ "$ok" != 1 ] && { [ ! -f "$STEAM_DIR/steamui.dll" ] || [ ! -f "$HELPER_REAL" ]; }; then
-    die "Steam chưa tải xong phần lõi (mạng chậm/bị ngắt?). Bấm mở lại để tiếp tục. Log: $LOG_DIR/steam-bootstrap.log"
+    die "Steam did not finish downloading its core files. Check your connection and reopen Steam to resume. See $LOG_DIR/steam-bootstrap.log"
   fi
-  echo "==> Steam đã tải xong phần lõi."
+  echo "==> Steam finished downloading its core files."
 fi
 
 # Màn hình đen: cờ -cef-* của Steam KHÔNG đủ → wrapper steamwebhelper.exe chèn
@@ -61,10 +61,10 @@ find "$WINEPREFIX/drive_c/users" -path '*Steam/htmlcache*' -name 'Singleton*' -d
 STEAM_FLAGS=(-noverifyfiles -cef-disable-gpu -cef-disable-gpu-compositing -cef-disable-sandbox)
 
 log="$LOG_DIR/steam-$(date +%Y%m%d-%H%M%S).log"
-echo "==> Mở Steam (bottle '$BOTTLE'), log: $log"
+echo "==> Opening Steam in bottle '$BOTTLE'. Log: $log"
 # shellcheck disable=SC2086
 "${WINE_NOHUP[@]}" wine "$STEAM_EXE_UNIX" "${STEAM_FLAGS[@]}" ${STEAM_ARGS:-} >"$log" 2>&1 &
-echo "    PID wine: $!"
+echo "    Wine PID: $!"
 
 # Steam tự cập nhật lúc đang chạy sẽ ghi đè wrapper ở trên → cửa sổ đen. Canh nền và tự sửa (scripts/cefwatch.sh).
 if [ "${KEGPLAY_CEFWRAP:-1}" = "1" ] && [ "${KEGPLAY_CEFWATCH:-1}" = "1" ]; then

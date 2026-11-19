@@ -10,7 +10,7 @@ def wr(p, s): open(os.path.join(w, p), 'w', encoding='utf-8').write(s)
 def sub(p, old, new, count=1):
     s = rd(p)
     if new in s: return
-    if s.count(old) != 1: sys.exit(f"LỖI {p}: đoạn gốc xuất hiện {s.count(old)} lần:\n{old[:200]}")
+    if s.count(old) != 1: sys.exit(f"ERROR in {p}: expected one match, found {s.count(old)}:\n{old[:200]}")
     wr(p, s.replace(old, new, count))
 
 for p in ('dlls/ntdll/unix/msync.c', 'dlls/ntdll/unix/msync.h', 'server/msync.c', 'server/msync.h'):

@@ -16,14 +16,14 @@ BASE="$ENGINES_DIR/dxmt/build/wine-$WINE_VERSION"
 TREE="$ENGINES_DIR/dxmt/build/wine-$WINE_VERSION-msync"
 export PATH="/opt/homebrew/opt/bison/bin:/opt/homebrew/opt/flex/bin:/opt/homebrew/bin:$PATH"
 
-[ -f "$BASE/Makefile" ] || die "Chưa có cây Wine đã configure — chạy engines/dxmt/build-winemac.sh trước."
-[ -d "$TREE" ] || { echo "==> Nhân cây mã Wine (APFS)"; cp -cR "$BASE" "$TREE"; }
+[ -f "$BASE/Makefile" ] || die "No configured Wine source tree found. Run engines/dxmt/build-winemac.sh first."
+[ -d "$TREE" ] || { echo "==> Cloning the Wine source tree (APFS)"; cp -cR "$BASE" "$TREE"; }
 python3 "$HERE/port-msync.py" "$HERE/src" "$TREE"
 (cd "$TREE" && perl tools/make_requests >/dev/null)
 echo "==> make ntdll.so + wineserver"
 (cd "$TREE" && arch -x86_64 /bin/bash -c 'make -j8 server/wineserver dlls/ntdll/ntdll.so') > "$LOG_DIR/msync-make.log" 2>&1 \
-  || die "build lỗi — xem $LOG_DIR/msync-make.log"
-[ "$(nm "$TREE/server/wineserver" | grep -c msync_init)" -gt 0 ] || die "wineserver không có msync"   # grep -q + pipefail = SIGPIPE
+  || die "Build failed. See $LOG_DIR/msync-make.log"
+[ "$(nm "$TREE/server/wineserver" | grep -c msync_init)" -gt 0 ] || die "wineserver lacks msync support"   # grep -q + pipefail = SIGPIPE
 mkdir -p "$HERE/lib"
 cp "$TREE/dlls/ntdll/ntdll.so" "$TREE/server/wineserver" "$HERE/lib/"
 echo "$WINE_FLAVOR-$WINE_VERSION" > "$HERE/lib/msync.wine"     # chỉ khớp đúng bản Wine này

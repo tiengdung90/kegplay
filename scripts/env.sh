@@ -89,16 +89,16 @@ dpi_install() {
   tgz="$KEGPLAY_DATA/cache/$name"
   mkdir -p "$KEGPLAY_DATA/cache" "$KEGPLAY_DATA/runtime/spoofdpi"
   if [ ! -f "$tgz" ]; then
-    echo "==> Tải SpoofDPI $KEGPLAY_DPI_VER ($arch)"
-    curl -fL --progress-bar -o "$tgz.part" "$url" && mv "$tgz.part" "$tgz" || { echo "CẢNH BÁO: không tải được SpoofDPI"; return 1; }
+    echo "==> Downloading SpoofDPI $KEGPLAY_DPI_VER ($arch)"
+    curl -fL --progress-bar -o "$tgz.part" "$url" && mv "$tgz.part" "$tgz" || { echo "WARNING: Could not download SpoofDPI"; return 1; }
   fi
   # mã băm chỉ ghim cho bản mặc định; đổi KEGPLAY_DPI_VER thì tự chịu trách nhiệm kiểm tra
   if [ "$KEGPLAY_DPI_VER" = "1.5.3" ] && [ "$(shasum -a 256 "$tgz" | cut -d' ' -f1)" != "$sha" ]; then
-    echo "CẢNH BÁO: SpoofDPI tải về SAI mã băm — bỏ, không cài."; rm -f "$tgz"; return 1
+    echo "WARNING: SpoofDPI checksum mismatch. Discarding the download."; rm -f "$tgz"; return 1
   fi
   tar -xzf "$tgz" -C "$KEGPLAY_DATA/runtime/spoofdpi" && chmod +x "$KEGPLAY_DPI_BIN" \
     && xattr -dr com.apple.quarantine "$KEGPLAY_DATA/runtime/spoofdpi" 2>/dev/null
-  [ -x "$KEGPLAY_DPI_BIN" ] || { echo "CẢNH BÁO: giải nén SpoofDPI không ra file chạy"; return 1; }
+  [ -x "$KEGPLAY_DPI_BIN" ] || { echo "WARNING: No SpoofDPI executable found after extraction"; return 1; }
 }
 dpi_start() {
   nc -z 127.0.0.1 "$KEGPLAY_DPI_PORT" 2>/dev/null && return 0
@@ -109,7 +109,7 @@ dpi_start() {
     --https-split-mode chunk --https-chunk-size 5 --log-level warn \
     >"$KEGPLAY_DATA/logs/spoofdpi.log" 2>&1 &
   local _; for _ in 1 2 3 4 5 6 7 8; do nc -z 127.0.0.1 "$KEGPLAY_DPI_PORT" 2>/dev/null && return 0; sleep 0.5; done
-  echo "CẢNH BÁO: SpoofDPI không lên ở cổng $KEGPLAY_DPI_PORT (xem logs/spoofdpi.log) — Store có thể không vào được."
+  echo "WARNING: SpoofDPI did not start on port $KEGPLAY_DPI_PORT. The Store may be unavailable. See logs/spoofdpi.log."
 }
 # Tắt tiến trình có dòng lệnh CHỨA ĐÚNG chuỗi cho trước (so chuỗi cố định, không phải regex — đường dẫn có thể
 # chứa dấu cách, ngoặc…). Chỉ tắt tiến trình của CHÍNH bản kegPlay này (theo đường dẫn dữ liệu), không đụng
@@ -144,7 +144,7 @@ pac_server_start() {
   nohup perl "$KEGPLAY_ROOT/scripts/pacserver.pl" "$KEGPLAY_PAC_PORT" "$KEGPLAY_DATA/runtime/pac/kegplay.pac" \
     >/dev/null 2>&1 &
   local _; for _ in 1 2 3 4 5 6; do curl -fs -m 1 -o /dev/null "$KEGPLAY_PAC_URL" && return 0; sleep 0.5; done
-  echo "CẢNH BÁO: không bật được máy chủ PAC ở cổng $KEGPLAY_PAC_PORT — Store có thể không vào được."
+  echo "WARNING: Could not start the PAC server on port $KEGPLAY_PAC_PORT. The Store may be unavailable."
 }
 # Bật/tắt cả bộ vượt chặn (SpoofDPI + máy chủ PAC)
 unblock_start() { dpi_start; pac_server_start; }
@@ -156,7 +156,7 @@ mkdir -p "$LOG_DIR"
 STEAM_EXE_WIN='C:\Program Files (x86)\Steam\steam.exe'
 STEAM_EXE_UNIX="$WINEPREFIX/drive_c/Program Files (x86)/Steam/steam.exe"
 
-die() { echo "LỖI: $*" >&2; exit 1; }
+die() { echo "ERROR: $*" >&2; exit 1; }
 # Steam Overlay (GameOverlayRenderer*.dll) bị Steam chèn vào mọi game. Dưới Wine nó hay phá: KCD mất phím di chuyển,
 # Red Alert 2 + cnc-ddraw văng ngay lúc mở (2026-10-08). Chặn nạp 2 thư viện đó cho cả bottle; làm 1 lần, đánh dấu bằng file.
 overlay_off() {
@@ -196,7 +196,7 @@ d3dc_fix_game() { # <appid> <thư mục game>
   if wine reg import "$(winepath -w "$reg" 2>/dev/null || echo "$reg")" >/dev/null 2>&1; then
     printf '%s\n' "$pairs" > "$mark"
   else
-    echo "    (chưa sửa được trình biên dịch shader cho game $id — bỏ qua)"
+    echo "    Skipping the shader compiler fix for game $id: it could not be applied."
   fi
   rm -f "$reg"
 }
@@ -207,7 +207,7 @@ apply_game_fixes() {
   for id in $KEGPLAY_DDRAW_APPIDS; do
     [ -n "${1:-}" ] && [ "$1" != "$id" ] && continue
     grep -q '"StateFlags"[[:space:]]*"4"' "$apps/appmanifest_$id.acf" 2>/dev/null || continue
-    "$KEGPLAY_ROOT/scripts/fix-ddraw-game.sh" "$id" --auto || echo "    (chưa sửa được hiển thị cho game $id — bỏ qua)"
+    "$KEGPLAY_ROOT/scripts/fix-ddraw-game.sh" "$id" --auto || echo "    Skipping the display fix for game $id: it could not be applied."
   done
   for mf in "$apps"/appmanifest_*.acf; do
     [ -f "$mf" ] || continue
@@ -237,13 +237,13 @@ shader_cache_tidy() {
       case "$name" in ''|*/*|.|..) continue;; esac
       grep -qixF -- "$name" "$list" || continue                    # không phải exe của game kegPlay → bỏ qua
       printf '%s\n' "$now" | grep -qixF -- "$name" && continue      # game vẫn còn
-      rm -rf -- "${cache:?}/$name" && echo "==> Đã dọn bộ đệm shader của game đã gỡ: $name"
+      rm -rf -- "${cache:?}/$name" && echo "==> Cleared the shader cache for uninstalled game $name"
     done
   fi
   printf '%s\n' "$now" > "$list"
 }
 
-need_wine() { [ -x "$WINE_BASE/bin/wine" ] || die "Chưa có Wine. Chạy ./scripts/setup.sh trước."; }
+need_wine() { [ -x "$WINE_BASE/bin/wine" ] || die "Wine is missing. Run ./scripts/setup.sh first."; }
 
 # Wine của BOTTLE NÀY có đang chạy không (không xét bottle/bản kegPlay khác trên máy).
 bottle_running() { [ -x "$WINE_BASE/bin/wineserver" ] && "$WINE_BASE/bin/wineserver" -k0 2>/dev/null; }
@@ -271,7 +271,7 @@ kegplay_relocate() {
   old="$(cat "$marker")"
   [ "$old" = "$KEGPLAY_DATA" ] && return 0
   if bottle_running; then
-    echo "LƯU Ý: kegPlay đã bị chuyển chỗ nhưng Wine đang chạy — tắt hẳn (./scripts/stop.sh) rồi mở lại để tự sửa đường dẫn."
+    echo "kegPlay moved while Wine was running. Run ./scripts/stop.sh and reopen kegPlay to repair the paths."
     return 0
   fi
   perl "$KEGPLAY_ROOT/scripts/relocate.pl" "$WINEPREFIX" "$old" "$KEGPLAY_DATA" \

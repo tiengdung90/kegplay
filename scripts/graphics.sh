@@ -37,7 +37,7 @@ build_dxmt_runtime() {  # WINE_DXMT = bản nhân APFS của WINE_BASE + DXMT; d
   local want lib
   want="$(dxmt_stamp_want)"
   if dxmt_runtime_fresh; then return 0; fi
-  echo "==> Dựng runtime DXMT (bản nhân APFS của Wine gốc, gần như không tốn chỗ)"
+  echo "==> Creating the DXMT runtime from an APFS clone of Wine, which uses little additional space"
   rm -rf "$WINE_DXMT"
   cp -cR "$WINE_BASE" "$WINE_DXMT"
   lib="$WINE_DXMT/lib/wine"
@@ -78,10 +78,10 @@ sync_bottle_dlls() { # system32/syswow64 = bản builtin của runtime đang dù
 
 case "${1:-status}" in
   dxmt)
-    [ -f "$WINEMAC_DXMT" ] || die "Chưa có winemac.so bản DXMT — chạy ./engines/dxmt/build-winemac.sh trước."
+    [ -f "$WINEMAC_DXMT" ] || die "DXMT winemac.so is missing. Run ./engines/dxmt/build-winemac.sh first."
     # winemac.so (kèm sẵn trong gói) chỉ khớp ĐÚNG bản Wine nó được dựng cho
     built_for="$(cat "$WINEMAC_DXMT.wine" 2>/dev/null || echo "?")"
-    [ "$built_for" = "$WINE_FLAVOR-$WINE_VERSION" ] || die "winemac.so dựng cho Wine '$built_for' nhưng runtime là '$WINE_FLAVOR-$WINE_VERSION' — chạy ./engines/dxmt/build-winemac.sh (cần: brew install bison flex mingw-w64) hoặc dùng DXVK."
+    [ "$built_for" = "$WINE_FLAVOR-$WINE_VERSION" ] || die "winemac.so was built for '$built_for', but the runtime is '$WINE_FLAVOR-$WINE_VERSION'. Run ./engines/dxmt/build-winemac.sh (requires: brew install bison flex mingw-w64) or use DXVK."
     if [ ! -f "$DXMT_DIR/x86_64-windows/d3d11.dll" ]; then
       [ -f "$DXMT_TAR" ] || curl -fL --progress-bar -o "$DXMT_TAR" "$DXMT_URL"
       mkdir -p "$KEGPLAY_DATA/runtime/dist/dxmt" && tar -xzf "$DXMT_TAR" -C "$KEGPLAY_DATA/runtime/dist/dxmt"
@@ -91,7 +91,7 @@ case "${1:-status}" in
     clear_bottle_d3d
     sync_bottle_dlls
     echo dxmt > "$WINEPREFIX/.kegplay_engine"
-    echo "==> Bottle '$BOTTLE': DXMT $DXMT_VER bật (D3D10/11 → Metal)"
+    echo "==> Bottle '$BOTTLE': enabled DXMT $DXMT_VER (D3D10/11 → Metal)"
     ;;
   dxvk)
     use_runtime "$WINE_BASE"
@@ -111,19 +111,19 @@ case "${1:-status}" in
     reg_set "$REG\\Direct3D" VideoPciDeviceID REG_DWORD 0x73bf
     reg_set "$REG\\Direct3D" VideoMemorySize REG_SZ 8192
     echo dxvk > "$WINEPREFIX/.kegplay_engine"
-    echo "==> Bottle '$BOTTLE': DXVK bật (d3d11, d3d10core), GPU báo AMD RX 6800 / 8 GB"
+    echo "==> Bottle '$BOTTLE': enabled DXVK (d3d11, d3d10core), reporting an AMD RX 6800 with 8 GB"
     ;;
   wined3d)
     use_runtime "$WINE_BASE"
     clear_bottle_d3d
     sync_bottle_dlls
     echo wined3d > "$WINEPREFIX/.kegplay_engine"
-    echo "==> Bottle '$BOTTLE': về WineD3D mặc định"
+    echo "==> Bottle '$BOTTLE': restored the default WineD3D engine"
     ;;
   status)
-    echo "Bottle '$BOTTLE': công nghệ $(bottle_engine) — runtime $(basename "$WINE_HOME")"
-    wine reg query "$REG\\DllOverrides" 2>/dev/null | grep -iE "d3d|dxgi" || echo "Không override D3D"
+    echo "Bottle '$BOTTLE': engine $(bottle_engine), runtime $(basename "$WINE_HOME")"
+    wine reg query "$REG\\DllOverrides" 2>/dev/null | grep -iE "d3d|dxgi" || echo "No D3D overrides"
     wine reg query "$REG\\Direct3D" 2>/dev/null | grep -iE "Video" || true
     ;;
-  *) die "Dùng: $0 dxmt|dxvk|wined3d|status" ;;
+  *) die "Usage: $0 dxmt|dxvk|wined3d|status" ;;
 esac

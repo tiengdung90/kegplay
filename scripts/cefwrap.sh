@@ -14,7 +14,7 @@ HELPER="$CEF_DIR/steamwebhelper.exe"
 ORIG="$CEF_DIR/steamwebhelper_orig.exe"
 
 if [ "${1:-}" = "remove" ]; then
-  [ -f "$ORIG" ] && mv -f "$ORIG" "$HELPER" && echo "==> Đã trả steamwebhelper.exe gốc"
+  [ -f "$ORIG" ] && mv -f "$ORIG" "$HELPER" && echo "==> Restored the original steamwebhelper.exe"
   exit 0
 fi
 
@@ -22,12 +22,12 @@ fi
 if [ -f "$PRE" ] && ! [ "$SRC" -nt "$PRE" ]; then
   BIN="$PRE"
 elif [ ! -f "$BIN" ] || [ "$SRC" -nt "$BIN" ]; then
-  command -v x86_64-w64-mingw32-gcc >/dev/null || die "Thiếu prebuilt/cefwrap.exe và không có trình biên dịch (brew install mingw-w64)"
+  command -v x86_64-w64-mingw32-gcc >/dev/null || die "prebuilt/cefwrap.exe is missing and no compiler was found. Run: brew install mingw-w64"
   x86_64-w64-mingw32-gcc -O2 -s -municode -mwindows -o "$BIN" "$SRC"
-  echo "==> Đã build $BIN"
+  echo "==> Built $BIN"
 fi
 
-[ -f "$HELPER" ] || { echo "Chưa có steamwebhelper.exe (Steam chưa cập nhật lần đầu) — bỏ qua"; exit 0; }
+[ -f "$HELPER" ] || { echo "Skipping the wrapper: Steam has not installed steamwebhelper.exe in its first update yet."; exit 0; }
 
 if cmp -s "$BIN" "$HELPER"; then
   exit 0                                    # wrapper đang đúng chỗ
@@ -38,7 +38,7 @@ fi
 if [ "$(stat -f%z "$HELPER")" -gt 1000000 ]; then
   mv -f "$HELPER" "$ORIG"                   # bản thật (mới cài hoặc Steam vừa cập nhật) → cất làm _orig
 elif [ ! -f "$ORIG" ]; then
-  die "steamwebhelper.exe là wrapper nhưng thiếu steamwebhelper_orig.exe — chạy Steam › Verify hoặc cài lại Steam."
+  die "steamwebhelper.exe is the wrapper, but steamwebhelper_orig.exe is missing. Run Steam › Verify or reinstall Steam."
 fi
 cp "$BIN" "$HELPER"
-echo "==> Đã cài wrapper CEF (--disable-gpu --single-process)"
+echo "==> Installed the CEF wrapper (--disable-gpu --single-process)"

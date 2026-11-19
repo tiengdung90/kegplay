@@ -5,6 +5,6 @@
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 need_wine
-appid="${1:?Dùng: $0 <appid>}"
-case "$appid" in *[!0-9]*) die "AppID phải là số: $appid";; esac
+appid="${1:?Usage: $0 <appid>}"
+case "$appid" in *[!0-9]*) die "AppID must be numeric: $appid";; esac
 apply_game_fixes "$appid"

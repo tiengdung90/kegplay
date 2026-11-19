@@ -4,13 +4,13 @@
 import CoreGraphics
 import Foundation
 let d = CGMainDisplayID()
-if let c = CGDisplayCopyDisplayMode(d) { print("màn hình hiện tại: \(c.width)x\(c.height) (pixel \(c.pixelWidth)x\(c.pixelHeight))") }
+if let c = CGDisplayCopyDisplayMode(d) { print("Current display mode: \(c.width)x\(c.height) (pixels: \(c.pixelWidth)x\(c.pixelHeight))") }
 let opts = [kCGDisplayShowDuplicateLowResolutionModes: kCFBooleanTrue] as CFDictionary
 var seen = Set<String>()
 let modes = (CGDisplayCopyAllDisplayModes(d, opts) as? [CGDisplayMode] ?? []).map { "\($0.width)x\($0.height)" }.filter { seen.insert($0).inserted }
-print("chế độ có sẵn:", modes.joined(separator: " "))
+print("Available modes:", modes.joined(separator: " "))
 let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
 for w in list {
     guard ((w["kCGWindowOwnerName"] as? String) ?? "").lowercased().contains("wine"), let b = w["kCGWindowBounds"] as? [String: Any] else { continue }
-    print("cửa sổ wine pid \(w["kCGWindowOwnerPID"] ?? 0): \(b["Width"] ?? 0)x\(b["Height"] ?? 0) tại (\(b["X"] ?? 0),\(b["Y"] ?? 0)) lớp \(w["kCGWindowLayer"] ?? 0)")
+    print("Wine window, PID \(w["kCGWindowOwnerPID"] ?? 0): \(b["Width"] ?? 0)x\(b["Height"] ?? 0) at (\(b["X"] ?? 0),\(b["Y"] ?? 0)), layer \(w["kCGWindowLayer"] ?? 0)")
 }
